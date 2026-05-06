@@ -1,0 +1,127 @@
+﻿Tarea 1 (AES-256)
+Objetivo
+Implementar y validar el núcleo de cifrado AES-256.
+
+
+pruebas automáticas del Gate 1 (Check1_) con resultado exitoso.
+Comandos usados
+
+
+export DOTNET_ROOT="$HOME/.dotnet8"
+export PATH="$HOME/.dotnet8:$HOME/.dotnet/tools:$PATH"
+export Security__Check1KeyBase64="MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUY="
+export Security__Check1KeyVersion="v1"
+
+
+dotnet test "Cerberus-Project.sln" --filter "FullyQualifiedName~Check1_"
+
+
+Resultado esperado / obtenido
+- Total pruebas: 5
+- Superadas: 5
+- Fallidas: 0
+- Estado: PASSED
+Qué demuestra
+- Cifrado/descifrado correcto (roundtrip).
+- Validación de llave (casos válidos e inválidos).
+- Base sólida para continuar con tareas 2–5.
+
+
+
+
+TAREA 2
+Qué decir
+> “La llave AES no está en el código. Se inyecta por configuración (Security__Check1KeyBase64) y versión (Security__Check1KeyVersion), con validaciones explícitas si falta o es inválida.”
+
+
+ (archivos)
+- Security/Services/ConfigurationCheck1KeyProvider.cs
+- (apoyo) Security/Exceptions/Check1KeyException.cs
+---
+Comandos 
+export DOTNET_ROOT="$HOME/.dotnet8"
+export PATH="$HOME/.dotnet8:$HOME/.dotnet/tools:$PATH"
+export Security__Check1KeyBase64="MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUY="
+export Security__Check1KeyVersion="v1"
+
+
+dotnet test "Cerberus-Project.sln" --filter "FullyQualifiedName~Check2_"
+
+
+Resultado esperado
+- Total pruebas: 2
+- Superadas: 2
+- Fallidas: 0
+- Estado: PASSED
+---
+Que sedemuestra
+- La llave se obtiene desde configuración (no hardcoded).
+- Existe versión de llave para trazabilidad
+- El sistema falla explícitamente si configuración es incorrecta.
+---
+tarea 2
+> “Con esto se cierra la gestión de llaves en alcance local: llave externa validada + versionado mínimo + pruebas en PASS
+
+
+TAREA 3
+ (archivos)
+1. Security/Services/FileCryptoService.cs  
+2. Security/Services/SecurityCheckOrchestrator.cs  
+3. tests/Cerberus.Security.Tests/Check3_FileFlowTests.cs
+---
+Comando
+export DOTNET_ROOT="$HOME/.dotnet8"
+export PATH="$HOME/.dotnet8:$HOME/.dotnet/tools:$PATH"
+export Security__Check1KeyBase64="MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUY="
+export Security__Check1KeyVersion="v1"
+dotnet test "Cerberus-Project.sln" --filter "FullyQualifiedName~Check3_"
+---
+Qué decir (guion corto)
+Antes de ejecutar
+> “Ahora voy a validar la Tarea 3: el flujo de archivo cifrar/descifrar.  
+> El criterio de aceptación es que, después del roundtrip, los bytes recuperados sean idénticos a los originales.”
+Después de ejecutar (si sale PASS)
+> “Listo, el test Check3_ pasó.  
+> Eso confirma que el flujo de archivo funciona correctamente: el contenido vuelve íntegro tras cifrado y descifrado.”
+
+
+TAREA 4
+Verificar integridad de datos con SHA-256:
+- hash coincide cuando no hay cambios,
+- hash falla si hay tampering.
+ARCHIVOS
+- Security/Services/Sha256IntegrityHashService.cs
+- tests/Cerberus.Security.Tests/Check4_IntegrityTests.cs
+Comandos
+export DOTNET_ROOT="$HOME/.dotnet8"
+export PATH="$HOME/.dotnet8:$HOME/.dotnet/tools:$PATH"
+export Security__Check1KeyBase64="MDEyMzQ1Njc4OUFCQ0RFRjAxMjM0NTY3ODlBQkNERUY="
+export Security__Check1KeyVersion="v1"
+dotnet test "Cerberus-Project.sln" --filter "FullyQualifiedName~Check4_"
+
+
+
+
+ Tarea 4: integridad con SHA-256.  
+ El criterio es detectar alteraciones: mismo contenido, mismo hash; contenido alterado, hash distinto.”
+cuandoPASS
+> “Check4_ en PASS confirma que la verificación de integridad funciona y detecta tampering correctamente.”
+
+
+TAREA 5
+Pruebas de resistencia con binarios
+ejecutar la prueba de resistencia del módulo de cifrado sobre datos binarios.  
+El objetivo es validar que el flujo se mantiene estable y correcto bajo carga
+
+
+Comando
+dotnet test "Cerberus-Project.sln" --filter "FullyQualifiedName~Check5_"
+
+
+
+
+- tests/Cerberus.Security.Tests/Check5_StressTests.cs
+- Resultado PASS en terminal
+CUANDO PASSSSSS
+> “El check de estrés pasó; con esto confirmo que el módulo no solo funciona en casos básicos, también responde correctamente con carga binaria.  
+> Con este resultado cierro la Semana 2 completa.”

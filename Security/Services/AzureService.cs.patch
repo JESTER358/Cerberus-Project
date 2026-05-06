@@ -1,0 +1,18 @@
+--- ./Security/Services/AzureService.cs
++++ ./Security/Services/AzureService.cs
+@@ -37,4 +37,18 @@
+             throw;
+         }
+     }
++
++    public async Task<Stream> DescargarFragmentoAzureAsync(string nombreArchivo, CancellationToken cancellationToken = default)
++    {
++        var options = new BlobClientOptions(BlobClientOptions.ServiceVersion.V2021_12_02);
++        BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString, options);
++        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
++        BlobClient blobClient = containerClient.GetBlobClient(nombreArchivo);
++
++        var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
++        return response.Value.Content;
++    }
+ }
