@@ -6,6 +6,16 @@ using ProyectoInnovador.Security.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Aumentar limites para archivos pesados
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = long.MaxValue;
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue;
+});
+
 //configuracion de Servicios
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

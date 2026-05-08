@@ -44,6 +44,8 @@ public sealed class SecurityController : ControllerBase
     }
 
     [HttpPost("upload-multicloud")]
+    [DisableRequestSizeLimit]
+    [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
     public async Task<IActionResult> UploadMultiCloud([FromForm] IFormFile archivo)
     {
         try
