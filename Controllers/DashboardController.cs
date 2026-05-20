@@ -26,6 +26,15 @@ public class DashboardController : Controller
         ["Enterprise"] = (int.MaxValue, long.MaxValue) // ilimitado
     };
 
+    // ── Límite mensual por plan (GB/mes) ────────────────────────────────────
+    // Free: 1 GB/mes, Premium: 50 GB/mes, Enterprise: ilimitado
+    private static readonly Dictionary<string, long> MonthlyPlanLimitsBytes = new()
+    {
+        ["Free"]       = 1L  * 1024 * 1024 * 1024,   // 1 GB
+        ["Premium"]    = 50L * 1024 * 1024 * 1024,   // 50 GB
+        ["Enterprise"] = long.MaxValue
+    };
+
     public DashboardController(
         ISecurityCheckOrchestrator orchestrator,
         IFileOrchestrator fileOrchestrator,
@@ -92,6 +101,28 @@ public class DashboardController : Controller
             TempData["Error"] = $"Tu plan {plan} permite un máximo de {limites.MaxArchivos} archivo(s). " +
                                 "Actualiza tu plan para continuar.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // Límite mensual de GB por plan (suma de archivos subidos en el mes actual)
+        if (!MonthlyPlanLimitsBytes.TryGetValue(plan, out var limiteMensualBytes))
+            limiteMensualBytes = MonthlyPlanLimitsBytes["Free"];
+
+        if (limiteMensualBytes != long.MaxValue)
+        {
+            var nowUtc = DateTime.UtcNow;
+            var inicioMes = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+            var bytesMesActual = await _db.ArchivosOriginales
+                .Where(a => a.UsuarioId == usuarioId && a.DateCreatedUtc >= inicioMes)
+                .SumAsync(a => (long?)a.Tamano, ct) ?? 0L;
+
+            if (bytesMesActual + archivo.Length > limiteMensualBytes)
+            {
+                var gbMax = (double)limiteMensualBytes / 1024 / 1024 / 1024;
+                TempData["Error"] = $"Tu plan {plan} permite {gbMax:0.#} GB por mes. " +
+                                    "Actualiza a Premium o Enterprise para ampliar tu cuota mensual.";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         try

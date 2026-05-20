@@ -45,6 +45,7 @@ public class AdminController : Controller
         ViewData["TotalArchivos"]   = totalArchivos;
         ViewData["TotalFree"]       = usuarios.Count(u => u.Plan == "Free");
         ViewData["TotalPagos"]      = usuarios.Count(u => u.Plan != "Free");
+        ViewData["TotalAdmins"]     = usuarios.Count(u => u.EsAdmin);
 
         return View(usuarios);
     }

@@ -7,6 +7,8 @@
     var totalArchivos = ViewData["TotalArchivos"] as int? ?? 0;
     var totalFree     = ViewData["TotalFree"] as int? ?? 0;
     var totalPagos    = ViewData["TotalPagos"] as int? ?? 0;
+    var totalAdmins   = ViewData["TotalAdmins"] as int? ?? 0;
+    var avgArchivos   = totalUsuarios > 0 ? (double)totalArchivos / totalUsuarios : 0;
 }
 
 <div style="display:flex;flex-direction:column;gap:24px;">
@@ -28,6 +30,13 @@
         </div>
         <div class="card-sec">
             <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Admins</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalAdmins</div>
+                <span style="font-size:12px;color:var(--text-muted);">Usuarios con privilegios</span>
+            </div>
+        </div>
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
                 <span class="label-caps">Archivos</span>
                 <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalArchivos</div>
                 <span style="font-size:12px;color:var(--text-muted);">Cifrados y auditados</span>
@@ -45,6 +54,13 @@
                 <span class="label-caps">Pagos</span>
                 <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalPagos</div>
                 <span style="font-size:12px;color:var(--text-muted);">Premium / Enterprise</span>
+            </div>
+        </div>
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Promedio</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@avgArchivos.ToString("0.0")</div>
+                <span style="font-size:12px;color:var(--text-muted);">Archivos por usuario</span>
             </div>
         </div>
     </div>

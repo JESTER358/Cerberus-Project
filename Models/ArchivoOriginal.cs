@@ -21,6 +21,11 @@ public class ArchivoOriginal
     public string HashSha256 { get; set; } = string.Empty;
 
     /// <summary>
+    /// Fecha de creación (UTC). Se usa para límites mensuales por plan.
+    /// </summary>
+    public DateTime DateCreatedUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
     /// SHA-256 de la semilla usada para cifrar.
     /// Se guarda para validar la semilla al descifrar sin exponer la semilla real.
     /// </summary>

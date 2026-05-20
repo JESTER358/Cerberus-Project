@@ -43,6 +43,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(a => a.HashSha256).IsRequired().HasMaxLength(64);
             entity.Property(a => a.SeedHash).IsRequired().HasMaxLength(64);
             entity.Property(a => a.Tamano).IsRequired();
+            entity.Property(a => a.DateCreatedUtc).IsRequired();
         });
 
         modelBuilder.Entity<Fragmento>(entity =>

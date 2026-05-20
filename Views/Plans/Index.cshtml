@@ -8,9 +8,12 @@
 <div style="display:flex;flex-direction:column;gap:24px;">
 
     @* ── Encabezado ── *@
-    <div class="section-header">
+    <div class="section-header" style="text-align:center;">
         <h1 class="page-title">Planes y Actualizaciones</h1>
         <p class="page-subtitle">Elige el plan que mejor se adapta al volumen y tamaño de tus archivos.</p>
+        <div style="margin-top:10px;">
+            <span class="badge-sec badge-accent">Plan actual: @planActual</span>
+        </div>
     </div>
 
     @* ── Cards de planes ── *@
@@ -59,14 +62,11 @@
                 <div class="info-row"><span class="key">Tamaño por archivo</span><span class="spacer"></span><span class="val">200 MB</span></div>
                 <div class="info-row"><span class="key">Soporte</span><span class="spacer"></span><span class="val">Prioritario</span></div>
 
-                <form asp-controller="Plans" asp-action="Upgrade" method="post" style="margin-top:8px;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="plan" value="Premium" />
-                    <button type="submit" class="btn-sec btn-primary-sec btn-full" @(planActual == "Premium" ? "disabled" : "")>
-                        <span class="material-symbols-rounded">upgrade</span>
-                        Actualizar a Premium
-                    </button>
-                </form>
+                <a asp-controller="Plans" asp-action="Checkout" asp-route-plan="Premium"
+                   class="btn-sec btn-primary-sec btn-full" style="text-align:center;">
+                    <span class="material-symbols-rounded">credit_card</span>
+                    @(planActual == "Premium" ? "Plan actual" : "Actualizar a Premium")
+                </a>
             </div>
         </div>
 
@@ -86,14 +86,11 @@
                 <div class="info-row"><span class="key">Tamaño por archivo</span><span class="spacer"></span><span class="val">Ilimitado</span></div>
                 <div class="info-row"><span class="key">Soporte</span><span class="spacer"></span><span class="val">Dedicado</span></div>
 
-                <form asp-controller="Plans" asp-action="Upgrade" method="post" style="margin-top:8px;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="plan" value="Enterprise" />
-                    <button type="submit" class="btn-sec btn-outline-sec btn-full" @(planActual == "Enterprise" ? "disabled" : "")>
-                        <span class="material-symbols-rounded">workspace_premium</span>
-                        Actualizar a Enterprise
-                    </button>
-                </form>
+                <a asp-controller="Plans" asp-action="Checkout" asp-route-plan="Enterprise"
+                   class="btn-sec btn-outline-sec btn-full" style="text-align:center;">
+                    <span class="material-symbols-rounded">workspace_premium</span>
+                    @(planActual == "Enterprise" ? "Plan actual" : "Contactar ventas")
+                </a>
             </div>
         </div>
     </div>

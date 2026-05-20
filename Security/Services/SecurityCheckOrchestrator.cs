@@ -175,6 +175,7 @@ public sealed class SecurityCheckOrchestrator : ISecurityCheckOrchestrator
             Tamano     = archivo.Length,
             HashSha256 = hashArchivoHex,
             SeedHash   = seedHash,
+            DateCreatedUtc = DateTime.UtcNow,
             Fragmentos = new List<Fragmento>()
         };
 

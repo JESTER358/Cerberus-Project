@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"]      = "Checkout";
+    ViewData["ActivePage"] = "Plans";
+    var plan = ViewData["CheckoutPlan"]?.ToString() ?? "Premium";
+}
+
+<div style="display:flex;flex-direction:column;gap:24px;">
+
+    <div class="section-header">
+        <h1 class="page-title">Checkout Seguro</h1>
+        <p class="page-subtitle">Pago simulado para la demo — no se realizan cargos reales.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:start;">
+
+        @* Formulario *@
+        <div class="card-sec">
+            <div class="card-header-sec">
+                <span class="material-symbols-rounded">credit_card</span>
+                Datos de pago
+            </div>
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:16px;">
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert-sec alert-error">
+                        <span class="material-symbols-rounded">gpp_bad</span>
+                        @TempData["Error"]
+                    </div>
+                }
+
+                <form asp-controller="Plans" asp-action="Checkout" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="plan" value="@plan" />
+
+                    <div class="form-group-sec">
+                        <label class="label-caps">Nombre del titular</label>
+                        <input class="input-sec" type="text" name="cardHolder" placeholder="Ej: Omar Gaona" required />
+                    </div>
+
+                    <div class="form-group-sec">
+                        <label class="label-caps">Número de tarjeta</label>
+                        <input class="input-sec" type="text" name="cardNumber"
+                               placeholder="4242 4242 4242 4242" required
+                               style="font-family:monospace;letter-spacing:1px;" />
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="form-group-sec">
+                            <label class="label-caps">Expiración</label>
+                            <input class="input-sec" type="text" name="cardExpiry" placeholder="MM/AA" required />
+                        </div>
+                        <div class="form-group-sec">
+                            <label class="label-caps">CVV</label>
+                            <input class="input-sec" type="password" name="cardCvv" placeholder="123" required />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-sec btn-primary-sec btn-lg-sec btn-full" style="margin-top:8px;">
+                        <span class="material-symbols-rounded">lock</span>
+                        Confirmar pago simulado
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @* Resumen *@
+        <div class="card-sec">
+            <div class="card-header-sec">
+                <span class="material-symbols-rounded">receipt_long</span>
+                Resumen
+            </div>
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:12px;">
+                <div class="info-row">
+                    <span class="key">Plan seleccionado</span>
+                    <span class="spacer"></span>
+                    <span class="val accent">@plan</span>
+                </div>
+                <div class="info-row">
+                    <span class="key">Costo mensual</span>
+                    <span class="spacer"></span>
+                    <span class="val">@(plan == "Enterprise" ? "Custom" : "$150 MXN")</span>
+                </div>
+                <div class="info-row">
+                    <span class="key">Límite mensual</span>
+                    <span class="spacer"></span>
+                    <span class="val">@(plan == "Enterprise" ? "Ilimitado" : "50 GB")</span>
+                </div>
+                <div class="info-row">
+                    <span class="key">Seguridad</span>
+                    <span class="spacer"></span>
+                    <span class="val">AES-256-CBC + Zero Trust</span>
+                </div>
+
+                <div class="alert-sec alert-info" style="margin-top:8px;">
+                    <span class="material-symbols-rounded">info</span>
+                    Este formulario es solo para demo. No se realizan cargos reales.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

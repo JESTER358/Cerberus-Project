@@ -10,6 +10,7 @@
     var planActual  = Context.Session.GetString("UsuarioPlan") ?? "Free";
     var limiteMB    = planActual == "Free" ? 10 : planActual == "Premium" ? 200 : 9999;
     var limiteFiles = planActual == "Free" ? 3  : planActual == "Premium" ? 50  : -1;
+    var limiteGBMes = planActual == "Free" ? 1 : planActual == "Premium" ? 50 : -1;
 }
 
 @* ══════════════════════════════════════════════════════════
@@ -148,9 +149,10 @@
                 Plan activo: <strong style="color:var(--accent);">@planActual</strong>
                 · Límite: @(limiteFiles == -1 ? "Ilimitado" : $"{limiteFiles} archivos")
                 · @(limiteMB == 9999 ? "Sin límite de tamaño" : $"Hasta {limiteMB} MB por archivo")
+                · @(limiteGBMes == -1 ? "Sin límite mensual" : $"{limiteGBMes} GB/mes")
                 @if (planActual == "Free")
                 {
-                    <span> — <a asp-controller="Account" asp-action="Register" style="color:var(--accent);">Mejora tu plan</a></span>
+                    <span> — <a asp-controller="Plans" asp-action="Index" style="color:var(--accent);">Mejora tu plan</a></span>
                 }
             </div>
         </div>
