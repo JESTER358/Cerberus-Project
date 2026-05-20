@@ -28,9 +28,13 @@
                 <span class="brand-version">v1.0</span>
             </a>
 
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <span class="material-symbols-rounded">menu</span>
+            </button>
+
             <div class="navbar-spacer"></div>
 
-            <div class="navbar-links">
+            <div class="navbar-links" id="navbarLinks">
                 <a class="nav-link-sec @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")"
                    asp-controller="Dashboard" asp-action="Index">
                     <span class="material-symbols-rounded">dashboard</span>
@@ -141,6 +145,13 @@
     logoutCancel?.addEventListener('click', closeLogout);
     logoutCancelBtn?.addEventListener('click', closeLogout);
     logoutModal?.addEventListener('click', e => { if (e.target === logoutModal) closeLogout(); });
+
+    // Mobile nav toggle
+    const navToggle = document.getElementById('navToggle');
+    const navbarLinks = document.getElementById('navbarLinks');
+    navToggle?.addEventListener('click', () => {
+        navbarLinks?.classList.toggle('open');
+    });
 
     // Toggle contraseña
     document.querySelectorAll('[data-toggle-password]').forEach(btn => {

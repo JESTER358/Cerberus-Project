@@ -75,6 +75,16 @@ a:hover { color: var(--accent-hover); }
   z-index: 100;
 }
 
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 22px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
 .navbar-brand-sec {
   display: flex;
   align-items: center;
@@ -773,18 +783,28 @@ a:hover { color: var(--accent-hover); }
   /* Layout */
   .app-main { padding: 16px; }
 
-  /* Navbar — colapsa el texto de los links, solo iconos */
+  /* Navbar — modo móvil con menú desplegable */
   .navbar-sec {
     padding: 0 12px;
     height: 56px;
   }
   .brand-version { display: none; }
-  .nav-link-sec span:not(.material-symbols-rounded) {
-    display: none;               /* oculta el texto, deja el icono */
+  .nav-toggle { display: inline-flex; }
+  .navbar-links {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px 12px 12px;
+    display: none;
   }
-  .nav-link-sec {
-    padding: 8px 10px;
-  }
+  .navbar-links.open { display: flex; }
+  .nav-link-sec { padding: 10px 12px; }
   .nav-divider { display: none; }
 
   /* Botones */
