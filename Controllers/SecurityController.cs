@@ -55,10 +55,11 @@ public sealed class SecurityController : ControllerBase
                 return BadRequest("archivo es requerido");
             }
 
-            var (result, seed) = await _orchestrator.UploadMultiCloudAsync(archivo, HttpContext.RequestAborted);
+            var (result, seed) = await _orchestrator.UploadMultiCloudAsync(archivo, null, HttpContext.RequestAborted);
 
             return Ok(new
             {
+                publicId   = result.ArchivoOriginal.PublicId,
                 archivoId  = result.ArchivoOriginal.Id,
                 nombre     = result.ArchivoOriginal.Nombre,
                 tamano     = result.ArchivoOriginal.Tamano,

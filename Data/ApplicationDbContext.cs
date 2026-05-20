@@ -33,6 +33,12 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(a => a.Id);
             entity.Property(a => a.PublicId).IsRequired();
             entity.HasIndex(a => a.PublicId).IsUnique();
+            entity.Property(a => a.UsuarioId).IsRequired(false);
+            entity.HasOne(a => a.Usuario)
+                  .WithMany()
+                  .HasForeignKey(a => a.UsuarioId)
+                  .IsRequired(false)
+                  .OnDelete(DeleteBehavior.SetNull);
             entity.Property(a => a.Nombre).IsRequired().HasMaxLength(255);
             entity.Property(a => a.HashSha256).IsRequired().HasMaxLength(64);
             entity.Property(a => a.SeedHash).IsRequired().HasMaxLength(64);

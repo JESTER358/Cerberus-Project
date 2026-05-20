@@ -1,0 +1,169 @@
+@model IEnumerable<ProyectoInnovador.Models.Usuario>
+@{
+    ViewData["Title"]      = "Admin";
+    ViewData["ActivePage"] = "Admin";
+
+    var totalUsuarios = ViewData["TotalUsuarios"] as int? ?? 0;
+    var totalArchivos = ViewData["TotalArchivos"] as int? ?? 0;
+    var totalFree     = ViewData["TotalFree"] as int? ?? 0;
+    var totalPagos    = ViewData["TotalPagos"] as int? ?? 0;
+}
+
+<div style="display:flex;flex-direction:column;gap:24px;">
+
+    @* ── Encabezado ── *@
+    <div class="section-header">
+        <h1 class="page-title">Panel de Administración</h1>
+        <p class="page-subtitle">Gestión de usuarios, planes y permisos del sistema.</p>
+    </div>
+
+    @* ── Stats superiores ── *@
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Usuarios</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalUsuarios</div>
+                <span style="font-size:12px;color:var(--text-muted);">Registrados en el sistema</span>
+            </div>
+        </div>
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Archivos</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalArchivos</div>
+                <span style="font-size:12px;color:var(--text-muted);">Cifrados y auditados</span>
+            </div>
+        </div>
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Free</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalFree</div>
+                <span style="font-size:12px;color:var(--text-muted);">Usuarios sin upgrade</span>
+            </div>
+        </div>
+        <div class="card-sec">
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:8px;">
+                <span class="label-caps">Pagos</span>
+                <div style="font-size:26px;font-weight:800;color:var(--text-primary);">@totalPagos</div>
+                <span style="font-size:12px;color:var(--text-muted);">Premium / Enterprise</span>
+            </div>
+        </div>
+    </div>
+
+    @* ── Tabla de usuarios ── *@
+    @if (!Model.Any())
+    {
+        <div class="card-sec">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded">group</span>
+                </div>
+                <p class="empty-state-title">Sin usuarios registrados</p>
+                <p class="empty-state-sub">Cuando alguien cree una cuenta, aparecerá aquí.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-sec-wrap">
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table class="table-sec">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th style="text-align:center;">Admin</th>
+                            <th style="text-align:right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            <tr>
+                                <td>@u.Id</td>
+                                <td style="font-weight:700;color:var(--text-primary);">@u.NombreUsuario</td>
+                                <td style="color:var(--text-muted);">@u.Email</td>
+                                <td>
+                                    <span class="badge-sec @(u.Plan == "Free" ? "badge-warning" : "badge-success")">
+                                        @u.Plan
+                                    </span>
+                                </td>
+                                <td style="text-align:center;">
+                                    @if (u.EsAdmin)
+                                    {
+                                        <span class="badge-sec badge-success">Sí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-sec badge-warning">No</span>
+                                    }
+                                </td>
+                                <td style="text-align:right;white-space:nowrap;">
+                                    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+                                        @* Cambiar plan *@
+                                        <form asp-controller="Admin" asp-action="CambiarPlan" method="post" style="display:flex;gap:6px;align-items:center;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="usuarioId" value="@u.Id" />
+                                            <select class="select-sec" name="plan" style="min-width:120px;">
+                                                @if (u.Plan == "Free")
+                                                {
+                                                    <option value="Free" selected>Free</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="Free">Free</option>
+                                                }
+                                                @if (u.Plan == "Premium")
+                                                {
+                                                    <option value="Premium" selected>Premium</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="Premium">Premium</option>
+                                                }
+                                                @if (u.Plan == "Enterprise")
+                                                {
+                                                    <option value="Enterprise" selected>Enterprise</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="Enterprise">Enterprise</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn-sec btn-ghost-sec btn-sm-sec">
+                                                <span class="material-symbols-rounded">swap_horiz</span>
+                                                Plan
+                                            </button>
+                                        </form>
+
+                                        @* Toggle admin *@
+                                        <form asp-controller="Admin" asp-action="ToggleAdmin" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="usuarioId" value="@u.Id" />
+                                            <button type="submit" class="btn-sec btn-outline-sec btn-sm-sec">
+                                                <span class="material-symbols-rounded">shield</span>
+                                                @(u.EsAdmin ? "Revocar" : "Hacer admin")
+                                            </button>
+                                        </form>
+
+                                        @* Eliminar *@
+                                        <form asp-controller="Admin" asp-action="EliminarUsuario" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="usuarioId" value="@u.Id" />
+                                            <button type="submit" class="btn-sec btn-danger-sec btn-sm-sec">
+                                                <span class="material-symbols-rounded">delete</span>
+                                                Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+</div>

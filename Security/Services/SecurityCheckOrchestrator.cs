@@ -107,7 +107,7 @@ public sealed class SecurityCheckOrchestrator : ISecurityCheckOrchestrator
     /// </summary>
     private const long MaxFileSizeBytes = 200 * 1024 * 1024; // 200 MB
 
-    public async Task<(MultiCloudUploadResult Result, string Seed)> UploadMultiCloudAsync(IFormFile archivo, CancellationToken cancellationToken = default)
+    public async Task<(MultiCloudUploadResult Result, string Seed)> UploadMultiCloudAsync(IFormFile archivo, int? usuarioId = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(archivo);
         if (archivo.Length <= 0)
@@ -170,6 +170,7 @@ public sealed class SecurityCheckOrchestrator : ISecurityCheckOrchestrator
         var archivoOriginal = new ArchivoOriginal
         {
             PublicId   = Guid.NewGuid(),
+            UsuarioId  = usuarioId,
             Nombre     = nombreArchivo,
             Tamano     = archivo.Length,
             HashSha256 = hashArchivoHex,

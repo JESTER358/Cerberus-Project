@@ -2,6 +2,7 @@
 @{
     ViewData["Title"]      = "Historial de Auditoría";
     ViewData["ActivePage"] = "Logs";
+    var esAdmin = ViewData["EsAdmin"] is bool b && b;
 }
 
 <div style="display:flex;flex-direction:column;gap:24px;">

@@ -22,11 +22,25 @@ public class LogController : Controller
         ViewData["Title"]      = "Historial de Auditoría";
         ViewData["ActivePage"] = "Logs";
 
-        var archivos = await _db.ArchivosOriginales
+        var esAdmin = HttpContext.Session.GetString("UsuarioAdmin") == "true";
+
+        IQueryable<ProyectoInnovador.Models.ArchivoOriginal> query = _db.ArchivosOriginales
             .Include(a => a.Fragmentos)
+            .Include(a => a.Usuario);
+
+        if (!esAdmin)
+        {
+            // Usuario normal: solo sus archivos
+            var nombreUsuario = HttpContext.Session.GetString("UsuarioNombre");
+            query = query.Where(a => a.Usuario != null && a.Usuario.NombreUsuario == nombreUsuario);
+        }
+        // Admin: ve todo (no filtra)
+
+        var archivos = await query
             .OrderByDescending(a => a.Id)
             .ToListAsync();
 
+        ViewData["EsAdmin"] = esAdmin;
         return View(archivos);
     }
 
@@ -51,10 +65,19 @@ public class LogController : Controller
     // GET /Log/Download
     public async Task<IActionResult> Download()
     {
-        var archivos = await _db.ArchivosOriginales
+        var esAdmin = HttpContext.Session.GetString("UsuarioAdmin") == "true";
+
+        IQueryable<ProyectoInnovador.Models.ArchivoOriginal> query = _db.ArchivosOriginales
             .Include(a => a.Fragmentos)
-            .OrderByDescending(a => a.Id)
-            .ToListAsync();
+            .Include(a => a.Usuario);
+
+        if (!esAdmin)
+        {
+            var nombreUsuario = HttpContext.Session.GetString("UsuarioNombre");
+            query = query.Where(a => a.Usuario != null && a.Usuario.NombreUsuario == nombreUsuario);
+        }
+
+        var archivos = await query.OrderByDescending(a => a.Id).ToListAsync();
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Nombre,Tamaño (bytes),SHA-256,Fragmentos,Proveedores");

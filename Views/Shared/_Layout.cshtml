@@ -41,11 +41,24 @@
                     <span class="material-symbols-rounded">history</span>
                     Historial
                 </a>
+                <a class="nav-link-sec @(ViewData["ActivePage"]?.ToString() == "Plans" ? "active" : "")"
+                   asp-controller="Plans" asp-action="Index">
+                    <span class="material-symbols-rounded">workspace_premium</span>
+                    Planes
+                </a>
                 <a class="nav-link-sec @(ViewData["ActivePage"]?.ToString() == "Settings" ? "active" : "")"
                    asp-controller="Settings" asp-action="Index">
                     <span class="material-symbols-rounded">settings</span>
                     Ajustes
                 </a>
+                @if (Context.Session.GetString("UsuarioAdmin") == "true")
+                {
+                    <a class="nav-link-sec @(ViewData["ActivePage"]?.ToString() == "Admin" ? "active" : "")"
+                       asp-controller="Admin" asp-action="Index">
+                        <span class="material-symbols-rounded">admin_panel_settings</span>
+                        Admin
+                    </a>
+                }
                 <div class="nav-divider"></div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;padding:0 8px;line-height:1.3;">
                     <span style="font-size:13px;font-weight:700;color:var(--text-primary);">

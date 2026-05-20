@@ -10,6 +10,12 @@ public class ArchivoOriginal
     /// </summary>
     public Guid PublicId { get; set; } = Guid.NewGuid();
 
+    /// <summary>
+    /// Usuario propietario. Null solo para el admin hardcodeado (cerberus_admin).
+    /// </summary>
+    public int? UsuarioId { get; set; }
+    public Usuario? Usuario { get; set; }
+
     public string Nombre { get; set; } = string.Empty;
     public long Tamano { get; set; }
     public string HashSha256 { get; set; } = string.Empty;

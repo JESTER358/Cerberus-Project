@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"]      = "Planes";
+    ViewData["ActivePage"] = "Plans";
+
+    var planActual = Context.Session.GetString("UsuarioPlan") ?? "Free";
+}
+
+<div style="display:flex;flex-direction:column;gap:24px;">
+
+    @* ── Encabezado ── *@
+    <div class="section-header">
+        <h1 class="page-title">Planes y Actualizaciones</h1>
+        <p class="page-subtitle">Elige el plan que mejor se adapta al volumen y tamaño de tus archivos.</p>
+    </div>
+
+    @* ── Cards de planes ── *@
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+
+        @* Free *@
+        <div class="card-sec">
+            <div class="card-header-sec">
+                <span class="material-symbols-rounded">bolt</span>
+                Free
+                @if (planActual == "Free")
+                {
+                    <span class="badge-sec badge-accent" style="margin-left:auto;">ACTUAL</span>
+                }
+            </div>
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:12px;">
+                <p style="color:var(--text-muted);font-size:13px;">Ideal para pruebas y archivos livianos.</p>
+                <div class="info-row"><span class="key">Máx. archivos</span><span class="spacer"></span><span class="val">3</span></div>
+                <div class="info-row"><span class="key">Tamaño por archivo</span><span class="spacer"></span><span class="val">10 MB</span></div>
+                <div class="info-row"><span class="key">Soporte</span><span class="spacer"></span><span class="val">Básico</span></div>
+
+                <form asp-controller="Plans" asp-action="Upgrade" method="post" style="margin-top:8px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="plan" value="Free" />
+                    <button type="submit" class="btn-sec btn-ghost-sec btn-full" @(planActual == "Free" ? "disabled" : "")>
+                        <span class="material-symbols-rounded">check</span>
+                        Usar Free
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @* Premium *@
+        <div class="card-sec" style="border:2px solid var(--accent);">
+            <div class="card-header-sec">
+                <span class="material-symbols-rounded">rocket_launch</span>
+                Premium
+                @if (planActual == "Premium")
+                {
+                    <span class="badge-sec badge-accent" style="margin-left:auto;">ACTUAL</span>
+                }
+            </div>
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:12px;">
+                <p style="color:var(--text-muted);font-size:13px;">Más velocidad y más capacidad para equipos en crecimiento.</p>
+                <div class="info-row"><span class="key">Máx. archivos</span><span class="spacer"></span><span class="val">50</span></div>
+                <div class="info-row"><span class="key">Tamaño por archivo</span><span class="spacer"></span><span class="val">200 MB</span></div>
+                <div class="info-row"><span class="key">Soporte</span><span class="spacer"></span><span class="val">Prioritario</span></div>
+
+                <form asp-controller="Plans" asp-action="Upgrade" method="post" style="margin-top:8px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="plan" value="Premium" />
+                    <button type="submit" class="btn-sec btn-primary-sec btn-full" @(planActual == "Premium" ? "disabled" : "")>
+                        <span class="material-symbols-rounded">upgrade</span>
+                        Actualizar a Premium
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @* Enterprise *@
+        <div class="card-sec">
+            <div class="card-header-sec">
+                <span class="material-symbols-rounded">shield</span>
+                Enterprise
+                @if (planActual == "Enterprise")
+                {
+                    <span class="badge-sec badge-accent" style="margin-left:auto;">ACTUAL</span>
+                }
+            </div>
+            <div class="card-body-sec" style="display:flex;flex-direction:column;gap:12px;">
+                <p style="color:var(--text-muted);font-size:13px;">Sin límites para organizaciones con alto volumen.</p>
+                <div class="info-row"><span class="key">Máx. archivos</span><span class="spacer"></span><span class="val">Ilimitado</span></div>
+                <div class="info-row"><span class="key">Tamaño por archivo</span><span class="spacer"></span><span class="val">Ilimitado</span></div>
+                <div class="info-row"><span class="key">Soporte</span><span class="spacer"></span><span class="val">Dedicado</span></div>
+
+                <form asp-controller="Plans" asp-action="Upgrade" method="post" style="margin-top:8px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="plan" value="Enterprise" />
+                    <button type="submit" class="btn-sec btn-outline-sec btn-full" @(planActual == "Enterprise" ? "disabled" : "")>
+                        <span class="material-symbols-rounded">workspace_premium</span>
+                        Actualizar a Enterprise
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @* ── Tabla comparativa ── *@
+    <div class="card-sec">
+        <div class="card-header-sec">
+            <span class="material-symbols-rounded">table_chart</span>
+            Comparativa de Planes
+        </div>
+        <div class="card-body-sec" style="padding:0;">
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table class="table-sec">
+                    <thead>
+                        <tr>
+                            <th>Característica</th>
+                            <th style="text-align:center;">Free</th>
+                            <th style="text-align:center;">Premium</th>
+                            <th style="text-align:center;">Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Máximo de archivos</td>
+                            <td style="text-align:center;">3</td>
+                            <td style="text-align:center;">50</td>
+                            <td style="text-align:center;">Ilimitado</td>
+                        </tr>
+                        <tr>
+                            <td>Tamaño por archivo</td>
+                            <td style="text-align:center;">10 MB</td>
+                            <td style="text-align:center;">200 MB</td>
+                            <td style="text-align:center;">Ilimitado</td>
+                        </tr>
+                        <tr>
+                            <td>Multi-cloud</td>
+                            <td style="text-align:center;"><span class="badge-sec badge-success">Sí</span></td>
+                            <td style="text-align:center;"><span class="badge-sec badge-success">Sí</span></td>
+                            <td style="text-align:center;"><span class="badge-sec badge-success">Sí</span></td>
+                        </tr>
+                        <tr>
+                            <td>Soporte</td>
+                            <td style="text-align:center;">Básico</td>
+                            <td style="text-align:center;">Prioritario</td>
+                            <td style="text-align:center;">Dedicado</td>
+                        </tr>
+                        <tr>
+                            <td>Auditoría avanzada</td>
+                            <td style="text-align:center;"><span class="badge-sec badge-warning">Limitado</span></td>
+                            <td style="text-align:center;"><span class="badge-sec badge-success">Completo</span></td>
+                            <td style="text-align:center;"><span class="badge-sec badge-success">Completo</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

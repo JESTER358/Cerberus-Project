@@ -60,6 +60,16 @@ public class DashboardController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        // Resolver UsuarioId desde la sesión
+        int? usuarioId = null;
+        var nombreUsuario = HttpContext.Session.GetString("UsuarioNombre");
+        if (nombreUsuario != "cerberus_admin" && !string.IsNullOrEmpty(nombreUsuario))
+        {
+            var usuarioDb = await _db.Usuarios
+                .FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario, ct);
+            usuarioId = usuarioDb?.Id;
+        }
+
         // ── Validar límites del plan ──────────────────────────────────────────────
         var plan = HttpContext.Session.GetString("UsuarioPlan") ?? "Free";
         if (!PlanLimits.TryGetValue(plan, out var limites))
@@ -75,7 +85,8 @@ public class DashboardController : Controller
         }
 
         // Límite de cantidad de archivos
-        var totalArchivos = await _db.ArchivosOriginales.CountAsync(ct);
+        var totalArchivos = await _db.ArchivosOriginales
+            .CountAsync(a => a.UsuarioId == usuarioId, ct);
         if (totalArchivos >= limites.MaxArchivos)
         {
             TempData["Error"] = $"Tu plan {plan} permite un máximo de {limites.MaxArchivos} archivo(s). " +
@@ -86,7 +97,7 @@ public class DashboardController : Controller
         try
         {
             // El servidor genera la semilla internamente — el usuario nunca la elige
-            var (result, seed) = await _orchestrator.UploadMultiCloudAsync(archivo, ct);
+            var (result, seed) = await _orchestrator.UploadMultiCloudAsync(archivo, usuarioId, ct);
 
             // La semilla viaja UNA sola vez por TempData (se elimina tras la siguiente request)
             // Nunca se guarda en DB, logs, ni cookies.
