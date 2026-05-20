@@ -105,6 +105,23 @@ public class PlansController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // GET /Plans/InvoiceDemo
+    [HttpGet]
+    public IActionResult InvoiceDemo()
+    {
+        // Demo simple: PDF falso (texto) en navegador.
+        // En un entorno real se generaría con un motor de PDF.
+        var content = "CERBERUS — FACTURA DEMO\n\n" +
+                      "Cliente: Usuario demo\n" +
+                      "Plan: Premium\n" +
+                      "Total: $150 MXN\n" +
+                      "Estado: Pagado (simulado)\n\n" +
+                      "Gracias por tu confianza.\n";
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        return File(bytes, "application/pdf", "Factura_Cerberus_Demo.pdf");
+    }
+
     // POST /Plans/Upgrade
     [HttpPost]
     [ValidateAntiForgeryToken]
