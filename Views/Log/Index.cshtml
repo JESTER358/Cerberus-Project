@@ -1,0 +1,134 @@
+@model IEnumerable<ProyectoInnovador.Models.ArchivoOriginal>
+@{
+    ViewData["Title"]      = "Historial de Auditoría";
+    ViewData["ActivePage"] = "Logs";
+}
+
+<div style="display:flex;flex-direction:column;gap:24px;">
+
+    @* ── Encabezado ── *@
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div class="section-header" style="margin-bottom:0;">
+            <h1 class="page-title">Historial de Auditoría</h1>
+            <p class="page-subtitle">Registro completo de archivos cifrados y distribuidos en multi-cloud.</p>
+        </div>
+        <a asp-controller="Log" asp-action="Download"
+           class="btn-sec btn-ghost-sec btn-full-mobile"
+           style="flex-shrink:0;">
+            <span class="material-symbols-rounded">download</span>
+            Exportar CSV
+        </a>
+    </div>
+
+    @* ── Tabla principal ── *@
+    @if (!Model.Any())
+    {
+        <div class="card-sec">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <span class="material-symbols-rounded">folder_open</span>
+                </div>
+                <p class="empty-state-title">Sin registros aún</p>
+                <p class="empty-state-sub">
+                    Cuando cifres y distribuyas un archivo, aparecerá aquí con su trazabilidad completa.
+                </p>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn-sec btn-primary-sec">
+                    <span class="material-symbols-rounded">lock</span>
+                    Cifrar mi primer archivo
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-sec-wrap">
+            @* scroll horizontal en mobile — nunca rompe el layout *@
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <table class="table-sec">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;"># ID</th>
+                            <th>Archivo</th>
+                            <th>Tamaño</th>
+                            <th class="col-hash">SHA-256</th>
+                            <th style="text-align:center;">Frags.</th>
+                            <th>Proveedores</th>
+                            <th style="text-align:right;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var archivo in Model)
+                        {
+                            var numFrags  = archivo.Fragmentos.Count;
+                            var completo  = numFrags >= 2;
+                            <tr>
+                                <td>
+                                    <span style="font-family:monospace;color:var(--accent);font-weight:700;">
+                                        #@archivo.Id
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="filename">
+                                        <span class="material-symbols-rounded">description</span>
+                                        <span style="word-break:break-all;">@archivo.Nombre</span>
+                                    </div>
+                                </td>
+                                <td style="white-space:nowrap;">
+                                    @{
+                                        var kb = archivo.Tamano / 1024.0;
+                                        var mb = kb / 1024.0;
+                                    }
+                                    @(mb >= 1 ? $"{mb:F2} MB" : $"{kb:F1} KB")
+                                </td>
+                                <td class="col-hash">
+                                    <span class="font-mono" style="font-size:11px;color:var(--text-muted);"
+                                          title="@archivo.HashSha256">
+                                        @archivo.HashSha256[..16]…
+                                    </span>
+                                </td>
+                                <td style="text-align:center;">
+                                    @if (completo)
+                                    {
+                                        <span class="badge-sec badge-success">@numFrags / 2</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-sec badge-warning">@numFrags / 2</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                        @foreach (var frag in archivo.Fragmentos)
+                                        {
+                                            <span class="cloud-badge @(frag.CloudProvider == "AWS" ? "aws" : "azure")"
+                                                  style="font-size:9px;padding:4px 8px;border-radius:6px;">
+                                                @frag.CloudProvider
+                                            </span>
+                                        }
+                                        @if (!completo)
+                                        {
+                                            <span class="badge-sec badge-warning">PENDIENTE</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td style="text-align:right;white-space:nowrap;">
+                                    <a asp-controller="Log" asp-action="Detail" asp-route-id="@archivo.Id"
+                                       class="btn-sec btn-ghost-sec btn-sm-sec">
+                                        <span class="material-symbols-rounded">open_in_new</span>
+                                        Ver
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* ── Pie de tabla ── *@
+        <p style="font-size:12px;color:var(--text-muted);text-align:right;">
+            @Model.Count() registro(s) en total
+        </p>
+    }
+
+</div>

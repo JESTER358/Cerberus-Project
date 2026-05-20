@@ -173,7 +173,7 @@
             </p>
             <form asp-controller="Dashboard" asp-action="Decrypt" method="post">
                 @Html.AntiForgeryToken()
-                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                <div class="decrypt-form-row" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
                     <div class="form-group-sec" style="width:140px;">
                         <label class="label-caps" for="archivoId">ID del Archivo</label>
                         <input class="input-sec" type="number" id="archivoId" name="archivoId"
@@ -193,7 +193,7 @@
                         </div>
                     </div>
                     <div>
-                        <button type="submit" class="btn-sec btn-outline-sec btn-lg-sec">
+                        <button type="submit" class="btn-sec btn-outline-sec btn-lg-sec btn-full-mobile">
                             <span class="material-symbols-rounded">lock_open</span>
                             DESCIFRAR
                         </button>

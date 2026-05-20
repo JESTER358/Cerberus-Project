@@ -1,0 +1,175 @@
+@model ProyectoInnovador.Models.ArchivoOriginal
+@{
+    ViewData["Title"]      = $"Detalle #{Model.Id}";
+    ViewData["ActivePage"] = "Logs";
+
+    var completo = Model.Fragmentos.Count >= 2;
+    var kb = Model.Tamano / 1024.0;
+    var mb = kb / 1024.0;
+    var tamanoStr = mb >= 1 ? $"{mb:F2} MB" : $"{kb:F1} KB";
+}
+
+<div style="display:flex;flex-direction:column;gap:24px;">
+
+    @* ── Breadcrumb ── *@
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
+        <a asp-controller="Log" asp-action="Index" style="color:var(--text-muted);">Historial</a>
+        <span class="material-symbols-rounded" style="font-size:16px;">chevron_right</span>
+        <span style="color:var(--text-primary);">Registro #@Model.Id</span>
+    </div>
+
+    @* ── Encabezado ── *@
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+            <h1 class="page-title">@Model.Nombre</h1>
+            <p class="page-subtitle">Trazabilidad completa del archivo cifrado y distribuido.</p>
+        </div>
+        @if (completo)
+        {
+            <span class="badge-sec badge-success" style="font-size:12px;padding:6px 14px;">
+                <span class="material-symbols-rounded" style="font-size:14px;">verified</span>
+                DISTRIBUIDO
+            </span>
+        }
+        else
+        {
+            <span class="badge-sec badge-warning" style="font-size:12px;padding:6px 14px;">
+                <span class="material-symbols-rounded" style="font-size:14px;">warning</span>
+                INCOMPLETO
+            </span>
+        }
+    </div>
+
+    @* ── Metadata del archivo ── *@
+    <div class="card-sec">
+        <div class="card-header-sec">
+            <span class="material-symbols-rounded">info</span>
+            Metadata del Archivo
+        </div>
+        <div class="card-body-sec">
+            <div class="info-row">
+                <span class="key">ID de Registro</span>
+                <span class="spacer"></span>
+                <span class="val accent">#@Model.Id</span>
+            </div>
+            <div class="info-row">
+                <span class="key">Nombre</span>
+                <span class="spacer"></span>
+                <span class="val" style="word-break:break-all;">@Model.Nombre</span>
+            </div>
+            <div class="info-row">
+                <span class="key">Tamaño Original</span>
+                <span class="spacer"></span>
+                <span class="val">@tamanoStr (@Model.Tamano.ToString("N0") bytes)</span>
+            </div>
+            <div class="info-row">
+                <span class="key">Algoritmo</span>
+                <span class="spacer"></span>
+                <span class="val">AES-256-CBC</span>
+            </div>
+            <div class="info-row">
+                <span class="key">Estado</span>
+                <span class="spacer"></span>
+                @if (completo)
+                {
+                    <span class="badge-sec badge-success">Distribuido en @Model.Fragmentos.Count nubes</span>
+                }
+                else
+                {
+                    <span class="badge-sec badge-warning">Fragmentos: @Model.Fragmentos.Count / 2</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── Hash de integridad ── *@
+    <div class="card-sec">
+        <div class="card-header-sec">
+            <span class="material-symbols-rounded">fingerprint</span>
+            Huella de Integridad SHA-256
+        </div>
+        <div class="card-body-sec">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+                Hash calculado sobre el contenido original antes de cifrar.
+                Cualquier cambio de un solo byte produce un hash completamente distinto.
+            </p>
+            @* scroll horizontal para el hash largo en mobile *@
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                <code style="
+                    display:block;
+                    padding:14px 16px;
+                    background:var(--bg-input);
+                    border:1px solid var(--border);
+                    border-radius:var(--radius-md);
+                    font-family:'Courier New',monospace;
+                    font-size:13px;
+                    color:var(--success);
+                    letter-spacing:1px;
+                    white-space:nowrap;
+                ">@Model.HashSha256</code>
+            </div>
+        </div>
+    </div>
+
+    @* ── Fragmentos en la nube ── *@
+    <div class="card-sec">
+        <div class="card-header-sec">
+            <span class="material-symbols-rounded">cloud</span>
+            Fragmentos en Multi-Cloud
+        </div>
+        <div class="card-body-sec" style="display:flex;flex-direction:column;gap:12px;">
+            @if (!Model.Fragmentos.Any())
+            {
+                <div class="alert-sec alert-warning">
+                    <span class="material-symbols-rounded">warning</span>
+                    No se encontraron fragmentos registrados para este archivo.
+                </div>
+            }
+            else
+            {
+                @foreach (var frag in Model.Fragmentos)
+                {
+                    var esAws   = frag.CloudProvider == "AWS";
+                    var badgeClass = esAws ? "aws" : "azure";
+                    var label      = esAws ? "AWS S3 — us-east-2" : "Azure Blob Storage";
+                    var partLabel  = esAws ? "Fragmento A (50%)" : "Fragmento B (50%)";
+
+                    <div class="cloud-row">
+                        <div class="cloud-badge @badgeClass">@frag.CloudProvider</div>
+                        <div class="cloud-row-info">
+                            <div class="cloud-row-title">@label — @partLabel</div>
+                            @* blob key con scroll horizontal en mobile *@
+                            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                                <div class="cloud-row-hash" style="white-space:nowrap;">
+                                    🔑 @frag.UrlRemota
+                                </div>
+                            </div>
+                            <div style="font-size:10px;color:var(--text-muted);font-family:monospace;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                SHA: @frag.HashFragmento[..24]…
+                            </div>
+                        </div>
+                        @if (completo)
+                        {
+                            <span class="material-symbols-rounded" style="color:var(--success);flex-shrink:0;">
+                                check_circle
+                            </span>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    @* ── Acciones ── *@
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a asp-controller="Log" asp-action="Index" class="btn-sec btn-ghost-sec btn-full-mobile">
+            <span class="material-symbols-rounded">arrow_back</span>
+            Volver al Historial
+        </a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-sec btn-outline-sec btn-full-mobile">
+            <span class="material-symbols-rounded">lock_open</span>
+            Descifrar Este Archivo
+        </a>
+    </div>
+
+</div>

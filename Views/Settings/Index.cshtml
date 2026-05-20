@@ -54,10 +54,10 @@
                                 Actualmente apuntando al simulador local MinIO.
                                 Cuando migres a AWS real, cambia este valor.
                             </p>
-                            <div style="display:flex;gap:10px;align-items:center;">
+                            <div class="settings-endpoint-badge" style="display:flex;gap:10px;align-items:center;">
                                 <input class="input-sec" type="text" value="@Model.S3Endpoint" readonly
-                                       style="color:var(--text-secondary);cursor:default;" />
-                                <span class="badge-sec badge-accent">LOCAL</span>
+                                       style="color:var(--text-secondary);cursor:default;min-width:0;" />
+                                <span class="badge-sec badge-accent" style="white-space:nowrap;flex-shrink:0;">LOCAL</span>
                             </div>
                         </div>
 
@@ -76,10 +76,10 @@
                             <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
                                 Actualmente usando Azurite (simulador local).
                             </p>
-                            <div style="display:flex;gap:10px;align-items:center;">
+                            <div class="settings-endpoint-badge" style="display:flex;gap:10px;align-items:center;">
                                 <input class="input-sec" type="text" value="@Model.AzureMode" readonly
-                                       style="color:var(--text-secondary);cursor:default;font-size:12px;" />
-                                <span class="badge-sec badge-accent">LOCAL</span>
+                                       style="color:var(--text-secondary);cursor:default;font-size:12px;min-width:0;" />
+                                <span class="badge-sec badge-accent" style="white-space:nowrap;flex-shrink:0;">LOCAL</span>
                             </div>
                         </div>
 

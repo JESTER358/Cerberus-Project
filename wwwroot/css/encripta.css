@@ -769,8 +769,92 @@ a:hover { color: var(--accent-hover); }
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 768px) {
+
+  /* Layout */
   .app-main { padding: 16px; }
-  .navbar-sec { padding: 0 16px; }
-  .settings-layout { grid-template-columns: 1fr; }
+
+  /* Navbar — colapsa el texto de los links, solo iconos */
+  .navbar-sec {
+    padding: 0 12px;
+    height: 56px;
+  }
+  .brand-version { display: none; }
+  .nav-link-sec span:not(.material-symbols-rounded) {
+    display: none;               /* oculta el texto, deja el icono */
+  }
+  .nav-link-sec {
+    padding: 8px 10px;
+  }
+  .nav-divider { display: none; }
+
+  /* Botones */
   .btn-lg-sec { height: 48px; font-size: 14px; }
+  .btn-full-mobile { width: 100%; }
+
+  /* Dropzone menos padding en mobile */
+  .dropzone { padding: 32px 20px; }
+  .dropzone-icon { width: 52px; height: 52px; }
+  .dropzone-icon .material-symbols-rounded { font-size: 28px; }
+
+  /* Formulario de descifrado — apila campos en mobile */
+  .decrypt-form-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .decrypt-form-row .form-group-sec {
+    width: 100% !important;     /* anula el width: 140px fijo */
+  }
+  .decrypt-form-row > div:last-child {
+    width: 100%;
+  }
+  .decrypt-form-row .btn-sec {
+    width: 100%;
+  }
+
+  /* Tabla — scroll horizontal en vez de romper el layout */
+  .table-sec-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+  }
+  .table-sec { min-width: 560px; }   /* fuerza scroll antes de comprimir */
+
+  /* Tabla de historial: oculta columna de hash en mobile (muy larga) */
+  .table-sec .col-hash { display: none; }
+
+  /* Settings sidebar — pasa a vertical */
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-menu { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; }
+  .settings-menu-title,
+  .settings-menu-divider { display: none; }
+
+  /* Modales — pantalla completa en mobile */
+  .modal-sec {
+    max-width: 100% !important;
+    margin: 0 12px;
+    border-radius: var(--radius-md);
+  }
+  .modal-backdrop-sec {
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
+  .modal-backdrop-sec.open .modal-sec {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    margin: 0;
+  }
+
+  /* Info rows — stack en mobile */
+  .info-row {
+    flex-wrap: wrap;
+  }
+  .info-row .val { text-align: left; }
+
+  /* Cloud row */
+  .cloud-row-hash { font-size: 10px; }
+
+  /* Page title más pequeño */
+  .page-title { font-size: 18px; }
+
+  /* Ocultar el campo de endpoint largo en settings mobile */
+  .settings-endpoint-badge { flex-direction: column; align-items: flex-start !important; gap: 8px; }
 }
