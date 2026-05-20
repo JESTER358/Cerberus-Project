@@ -15,7 +15,7 @@
     <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
         <a asp-controller="Log" asp-action="Index" style="color:var(--text-muted);">Historial</a>
         <span class="material-symbols-rounded" style="font-size:16px;">chevron_right</span>
-        <span style="color:var(--text-primary);">Registro #@Model.Id</span>
+        <span style="color:var(--text-primary);">@Model.PublicId.ToString()[..8]…</span>
     </div>
 
     @* ── Encabezado ── *@
@@ -50,7 +50,11 @@
             <div class="info-row">
                 <span class="key">ID de Registro</span>
                 <span class="spacer"></span>
-                <span class="val accent">#@Model.Id</span>
+                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:280px;">
+                    <code style="font-family:monospace;font-size:11px;color:var(--accent);white-space:nowrap;">
+                        @Model.PublicId.ToString()
+                    </code>
+                </div>
             </div>
             <div class="info-row">
                 <span class="key">Nombre</span>

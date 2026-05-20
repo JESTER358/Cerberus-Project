@@ -15,6 +15,17 @@ public class DashboardController : Controller
     // Sin límite fijo — Kestrel ya está configurado con long.MaxValue en Program.cs
     private const long MaxFileSizeBytes = long.MaxValue;
 
+    // ── Límites por plan ──────────────────────────────────────────────────────
+    // Free: 3 archivos máx, 10 MB por archivo
+    // Premium: 50 archivos máx, 200 MB por archivo
+    // Enterprise: ilimitado
+    private static readonly Dictionary<string, (int MaxArchivos, long MaxBytes)> PlanLimits = new()
+    {
+        ["Free"]       = (3,   10  * 1024 * 1024),   // 3 archivos, 10 MB
+        ["Premium"]    = (50,  200 * 1024 * 1024),   // 50 archivos, 200 MB
+        ["Enterprise"] = (int.MaxValue, long.MaxValue) // ilimitado
+    };
+
     public DashboardController(
         ISecurityCheckOrchestrator orchestrator,
         IFileOrchestrator fileOrchestrator,
@@ -49,7 +60,28 @@ public class DashboardController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Sin límite de tamaño — Kestrel configurado como long.MaxValue en Program.cs
+        // ── Validar límites del plan ──────────────────────────────────────────────
+        var plan = HttpContext.Session.GetString("UsuarioPlan") ?? "Free";
+        if (!PlanLimits.TryGetValue(plan, out var limites))
+            limites = PlanLimits["Free"];
+
+        // Límite de tamaño por archivo
+        if (archivo.Length > limites.MaxBytes)
+        {
+            var mbMax = limites.MaxBytes / 1024 / 1024;
+            TempData["Error"] = $"Tu plan {plan} permite archivos de hasta {mbMax} MB. " +
+                                "Actualiza a Premium o Enterprise para subir archivos más grandes.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Límite de cantidad de archivos
+        var totalArchivos = await _db.ArchivosOriginales.CountAsync(ct);
+        if (totalArchivos >= limites.MaxArchivos)
+        {
+            TempData["Error"] = $"Tu plan {plan} permite un máximo de {limites.MaxArchivos} archivo(s). " +
+                                "Actualiza tu plan para continuar.";
+            return RedirectToAction(nameof(Index));
+        }
 
         try
         {
@@ -60,7 +92,7 @@ public class DashboardController : Controller
             // Nunca se guarda en DB, logs, ni cookies.
             TempData["Seed"]        = seed;
             TempData["SeedArchivo"] = result.ArchivoOriginal.Nombre;
-            TempData["SeedId"]      = result.ArchivoOriginal.Id.ToString();
+            TempData["SeedId"]      = result.ArchivoOriginal.PublicId.ToString();
 
             return RedirectToAction(nameof(Index));
         }
@@ -79,9 +111,9 @@ public class DashboardController : Controller
     // POST /Dashboard/Decrypt
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Decrypt(int archivoId, string seed, CancellationToken ct)
+    public async Task<IActionResult> Decrypt(string publicId, string seed, CancellationToken ct)
     {
-        if (archivoId <= 0)
+        if (!Guid.TryParse(publicId, out var guid))
         {
             TempData["Error"] = "ID de archivo inválido.";
             return RedirectToAction(nameof(Index));
@@ -95,9 +127,17 @@ public class DashboardController : Controller
 
         try
         {
-            var bytes         = await _fileOrchestrator.DownloadAndReassembleAsync(archivoId, seed.Trim(), ct);
-            var archivo       = await _db.ArchivosOriginales.FindAsync([archivoId], ct);
-            var nombreArchivo = archivo?.Nombre ?? $"archivo_recuperado_{archivoId}.bin";
+            // Resolver el int Id interno desde el PublicId
+            var archivoMeta = await _db.ArchivosOriginales
+                .FirstOrDefaultAsync(a => a.PublicId == guid, ct);
+            if (archivoMeta is null)
+            {
+                TempData["Error"] = "No se encontró un archivo con ese ID.";
+                return RedirectToAction(nameof(Index));
+            }
+            var bytes         = await _fileOrchestrator.DownloadAndReassembleAsync(archivoMeta.Id, seed.Trim(), ct);
+            var archivo       = archivoMeta;
+            var nombreArchivo = archivo.Nombre;
 
             return File(bytes, "application/octet-stream", nombreArchivo);
         }

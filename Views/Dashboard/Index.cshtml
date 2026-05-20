@@ -6,6 +6,10 @@
     var seedArchivo = TempData["SeedArchivo"]?.ToString();
     var seedId      = TempData["SeedId"]?.ToString();
     var mostrarSeed = !string.IsNullOrEmpty(seed);
+
+    var planActual  = Context.Session.GetString("UsuarioPlan") ?? "Free";
+    var limiteMB    = planActual == "Free" ? 10 : planActual == "Premium" ? 200 : 9999;
+    var limiteFiles = planActual == "Free" ? 3  : planActual == "Premium" ? 50  : -1;
 }
 
 @* ══════════════════════════════════════════════════════════
@@ -27,7 +31,7 @@
                     <span class="material-symbols-rounded">check_circle</span>
                     <div>
                         <strong>@seedArchivo</strong> fue cifrado y distribuido en AWS S3 + Azure Blob.
-                        ID del archivo: <strong>#@seedId</strong>
+                        <br/>ID público: <strong style="font-family:monospace;font-size:12px;">@seedId</strong>
                     </div>
                 </div>
 
@@ -137,11 +141,18 @@
             </button>
         </div>
 
-        @* Info — el servidor genera la semilla automáticamente *@
+        @* Info — plan activo y límites *@
         <div class="alert-sec alert-info" style="margin-top:20px;">
             <span class="material-symbols-rounded">info</span>
-            El sistema generará una semilla criptográfica segura al cifrar.
-            Deberás guardarla — sin ella el archivo es irrecuperable.
+            <div>
+                Plan activo: <strong style="color:var(--accent);">@planActual</strong>
+                · Límite: @(limiteFiles == -1 ? "Ilimitado" : $"{limiteFiles} archivos")
+                · @(limiteMB == 9999 ? "Sin límite de tamaño" : $"Hasta {limiteMB} MB por archivo")
+                @if (planActual == "Free")
+                {
+                    <span> — <a asp-controller="Account" asp-action="Register" style="color:var(--accent);">Mejora tu plan</a></span>
+                }
+            </div>
         </div>
 
         @* Botón de acción *@
@@ -174,10 +185,12 @@
             <form asp-controller="Dashboard" asp-action="Decrypt" method="post">
                 @Html.AntiForgeryToken()
                 <div class="decrypt-form-row" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-                    <div class="form-group-sec" style="width:140px;">
-                        <label class="label-caps" for="archivoId">ID del Archivo</label>
-                        <input class="input-sec" type="number" id="archivoId" name="archivoId"
-                               placeholder="Ej: 3" min="1" required />
+                    <div class="form-group-sec" style="flex:1;min-width:200px;">
+                        <label class="label-caps" for="publicId">ID Público del Archivo</label>
+                        <input class="input-sec" type="text" id="publicId" name="publicId"
+                               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                               autocomplete="off" required
+                               style="font-family:monospace;font-size:12px;letter-spacing:0.5px;" />
                     </div>
                     <div class="form-group-sec" style="flex:1;min-width:220px;">
                         <label class="label-caps" for="seedInput">Semilla de Recuperación</label>
@@ -201,7 +214,7 @@
                 </div>
             </form>
             <p style="color:var(--text-muted);font-size:12px;margin-top:10px;">
-                Puedes ver los IDs disponibles en el
+                Puedes ver los IDs públicos en el
                 <a asp-controller="Log" asp-action="Index">Historial de Auditoría</a>.
             </p>
         </div>

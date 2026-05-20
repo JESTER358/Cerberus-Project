@@ -3,6 +3,13 @@ namespace ProyectoInnovador.Models;
 public class ArchivoOriginal
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Identificador público expuesto en vistas y al usuario.
+    /// GUID para evitar IDOR — el Id entero nunca sale de la capa de datos.
+    /// </summary>
+    public Guid PublicId { get; set; } = Guid.NewGuid();
+
     public string Nombre { get; set; } = string.Empty;
     public long Tamano { get; set; }
     public string HashSha256 { get; set; } = string.Empty;

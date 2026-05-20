@@ -169,6 +169,7 @@ public sealed class SecurityCheckOrchestrator : ISecurityCheckOrchestrator
         // --- Fase 4: Persistencia en DB (antes de subir — el ID es el prefijo único) ---
         var archivoOriginal = new ArchivoOriginal
         {
+            PublicId   = Guid.NewGuid(),
             Nombre     = nombreArchivo,
             Tamano     = archivo.Length,
             HashSha256 = hashArchivoHex,

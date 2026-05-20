@@ -30,20 +30,20 @@ public class LogController : Controller
         return View(archivos);
     }
 
-    // GET /Log/Detail/5
-    public async Task<IActionResult> Detail(int id)
+    // GET /Log/Detail/{guid}
+    public async Task<IActionResult> Detail(Guid id)
     {
         var archivo = await _db.ArchivosOriginales
             .Include(a => a.Fragmentos)
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.PublicId == id);
 
         if (archivo is null)
         {
-            TempData["Error"] = $"No existe un registro con ID #{id}.";
+            TempData["Error"] = $"No existe un registro con ese ID público.";
             return RedirectToAction(nameof(Index));
         }
 
-        ViewData["Title"]      = $"Detalle del Registro #{id}";
+        ViewData["Title"]      = $"Detalle del Registro {id.ToString()[..8]}…";
         ViewData["ActivePage"] = "Logs";
         return View(archivo);
     }

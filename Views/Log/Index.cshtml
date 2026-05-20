@@ -47,7 +47,7 @@
                 <table class="table-sec">
                     <thead>
                         <tr>
-                            <th style="width:60px;"># ID</th>
+                            <th style="min-width:120px;">ID Público</th>
                             <th>Archivo</th>
                             <th>Tamaño</th>
                             <th class="col-hash">SHA-256</th>
@@ -63,8 +63,9 @@
                             var completo  = numFrags >= 2;
                             <tr>
                                 <td>
-                                    <span style="font-family:monospace;color:var(--accent);font-weight:700;">
-                                        #@archivo.Id
+                                    <span style="font-family:monospace;color:var(--accent);font-weight:600;font-size:11px;"
+                                          title="@archivo.PublicId.ToString()">
+                                        @archivo.PublicId.ToString()[..8]…
                                     </span>
                                 </td>
                                 <td>
@@ -112,7 +113,7 @@
                                     </div>
                                 </td>
                                 <td style="text-align:right;white-space:nowrap;">
-                                    <a asp-controller="Log" asp-action="Detail" asp-route-id="@archivo.Id"
+                                    <a asp-controller="Log" asp-action="Detail" asp-route-id="@archivo.PublicId"
                                        class="btn-sec btn-ghost-sec btn-sm-sec">
                                         <span class="material-symbols-rounded">open_in_new</span>
                                         Ver
