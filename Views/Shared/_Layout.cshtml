@@ -47,6 +47,14 @@
                     Ajustes
                 </a>
                 <div class="nav-divider"></div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;padding:0 8px;line-height:1.3;">
+                    <span style="font-size:13px;font-weight:700;color:var(--text-primary);">
+                        @(Context.Session.GetString("UsuarioNombre") ?? "")
+                    </span>
+                    <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent);">
+                        @(Context.Session.GetString("UsuarioPlan") ?? "")
+                    </span>
+                </div>
                 <a class="nav-link-sec danger" href="#" id="logoutTrigger">
                     <span class="material-symbols-rounded">logout</span>
                     Cerrar Sesión
@@ -75,7 +83,7 @@
                 </div>
                 <div class="modal-footer-sec">
                     <button class="btn-sec btn-ghost-sec" id="logoutCancelBtn">Cancelar</button>
-                    <a class="btn-sec btn-danger-sec" asp-controller="Home" asp-action="Index">
+                    <a class="btn-sec btn-danger-sec" asp-controller="Account" asp-action="Logout">
                         <span class="material-symbols-rounded">logout</span>
                         Cerrar Sesión
                     </a>

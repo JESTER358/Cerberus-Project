@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoInnovador.Data;
+using ProyectoInnovador.Security.Filters;
 using System.Text;
 
 namespace ProyectoInnovador.Controllers;
 
+[RequireSession]
 public class LogController : Controller
 {
     private readonly ApplicationDbContext _db;

@@ -19,6 +19,15 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
 //configuracion de Servicios
 builder.Services.AddControllersWithViews();
 
+// Sesión — requerido para autenticación manual (sin ASP.NET Identity)
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // SQLite con path persistente en Azure App Service.
 // En Azure, D:\home\data sobrevive restarts y deploys (almacenamiento persistente montado).
 // En local, usa el directorio de la app normalmente.
@@ -64,6 +73,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",

@@ -23,6 +23,9 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(u => u.Id);
             entity.Property(u => u.NombreUsuario).IsRequired().HasMaxLength(100);
             entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
+            entity.Property(u => u.Email).HasMaxLength(150).HasDefaultValue("");
+            entity.Property(u => u.Plan).IsRequired().HasMaxLength(20).HasDefaultValue("Free");
+            entity.Property(u => u.EsAdmin).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<ArchivoOriginal>(entity =>

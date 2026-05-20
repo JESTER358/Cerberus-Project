@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ProyectoInnovador.Security.Filters;
 
 namespace ProyectoInnovador.Controllers;
 
@@ -6,6 +7,7 @@ namespace ProyectoInnovador.Controllers;
 /// Ajustes del sistema — por ahora lectura de la config activa.
 /// Cuando migres a nubes reales, aquí irán los campos de conexión.
 /// </summary>
+[RequireSession]
 public class SettingsController : Controller
 {
     private readonly IConfiguration _config;

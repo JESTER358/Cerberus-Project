@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoInnovador.Data;
 using ProyectoInnovador.Security.Contracts;
+using ProyectoInnovador.Security.Filters;
 
 namespace ProyectoInnovador.Controllers;
 
+[RequireSession]
 public class DashboardController : Controller
 {
     private readonly ISecurityCheckOrchestrator _orchestrator;
