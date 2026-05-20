@@ -153,6 +153,11 @@
         navbarLinks?.classList.toggle('open');
     });
 
+    // Cerrar menú al seleccionar opción
+    navbarLinks?.querySelectorAll('a.nav-link-sec').forEach(link => {
+        link.addEventListener('click', () => navbarLinks.classList.remove('open'));
+    });
+
     // Toggle contraseña
     document.querySelectorAll('[data-toggle-password]').forEach(btn => {
         btn.addEventListener('click', () => {
