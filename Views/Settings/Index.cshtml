@@ -49,15 +49,14 @@
                     <div class="card-body-sec" style="display:flex;flex-direction:column;gap:20px;">
 
                         <div class="form-group-sec">
-                            <label class="label-caps">Endpoint S3 / MinIO</label>
+                            <label class="label-caps">AWS S3 (Producción)</label>
                             <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
-                                Actualmente apuntando al simulador local MinIO.
-                                Cuando migres a AWS real, cambia este valor.
+                                Conectado a AWS S3 en us-east-2 (Ohio).
                             </p>
                             <div class="settings-endpoint-badge" style="display:flex;gap:10px;align-items:center;">
                                 <input class="input-sec" type="text" value="@Model.S3Endpoint" readonly
                                        style="color:var(--text-secondary);cursor:default;min-width:0;" />
-                                <span class="badge-sec badge-accent" style="white-space:nowrap;flex-shrink:0;">LOCAL</span>
+                                <span class="badge-sec badge-success" style="white-space:nowrap;flex-shrink:0;">PROD</span>
                             </div>
                         </div>
 
@@ -72,14 +71,14 @@
                         <div class="divider-sec"></div>
 
                         <div class="form-group-sec">
-                            <label class="label-caps">Azure Blob Storage</label>
+                            <label class="label-caps">Azure Blob Storage (Producción)</label>
                             <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
-                                Actualmente usando Azurite (simulador local).
+                                Conectado a Azure Blob Storage en Central US.
                             </p>
                             <div class="settings-endpoint-badge" style="display:flex;gap:10px;align-items:center;">
                                 <input class="input-sec" type="text" value="@Model.AzureMode" readonly
                                        style="color:var(--text-secondary);cursor:default;font-size:12px;min-width:0;" />
-                                <span class="badge-sec badge-accent" style="white-space:nowrap;flex-shrink:0;">LOCAL</span>
+                                <span class="badge-sec badge-success" style="white-space:nowrap;flex-shrink:0;">PROD</span>
                             </div>
                         </div>
 

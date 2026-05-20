@@ -857,4 +857,11 @@ a:hover { color: var(--accent-hover); }
 
   /* Ocultar el campo de endpoint largo en settings mobile */
   .settings-endpoint-badge { flex-direction: column; align-items: flex-start !important; gap: 8px; }
+
+  /* Ajuste de cards y formularios en Settings */
+  .settings-panel .card-body-sec { padding: 16px; }
+  .settings-menu-item { flex: 1 1 auto; justify-content: center; }
+  .settings-menu-item .material-symbols-rounded { font-size: 18px; }
+  .toggle-wrap { flex-direction: column; align-items: flex-start; }
+  .toggle { align-self: flex-end; }
 }
