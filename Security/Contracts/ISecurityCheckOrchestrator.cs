@@ -8,5 +8,9 @@ public interface ISecurityCheckOrchestrator
     FileRoundtripResult RunFileRoundtrip(byte[] originalBytes);
     FileRoundtripResult RunTamperedCiphertextScenario(byte[] originalBytes);
     string ComputeSha256(byte[] data);
-    Task<MultiCloudUploadResult> UploadMultiCloudAsync(IFormFile archivo, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Cifra y sube el archivo. Genera internamente la semilla segura.
+    /// Devuelve la semilla en texto plano UNA sola vez — el servidor no la vuelve a conocer.
+    /// </summary>
+    Task<(MultiCloudUploadResult Result, string Seed)> UploadMultiCloudAsync(IFormFile archivo, CancellationToken cancellationToken = default);
 }

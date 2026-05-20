@@ -1,0 +1,457 @@
+@{
+    ViewData["Title"]      = "Panel Principal";
+    ViewData["ActivePage"] = "Dashboard";
+
+    var seed        = TempData["Seed"]?.ToString();
+    var seedArchivo = TempData["SeedArchivo"]?.ToString();
+    var seedId      = TempData["SeedId"]?.ToString();
+    var mostrarSeed = !string.IsNullOrEmpty(seed);
+}
+
+@* ══════════════════════════════════════════════════════════
+   MODAL SEMILLA — aparece UNA sola vez tras cifrar con éxito
+   ══════════════════════════════════════════════════════════ *@
+@if (mostrarSeed)
+{
+    <div class="modal-backdrop-sec open" id="seedModal">
+        <div class="modal-sec" style="max-width:520px;">
+            <div class="modal-header-sec" style="background:rgba(34,197,94,0.08);">
+                <div class="modal-icon-wrap success">
+                    <span class="material-symbols-rounded">key</span>
+                </div>
+                <span class="modal-title-sec">¡Archivo cifrado! Guarda tu semilla</span>
+            </div>
+            <div class="modal-body-sec">
+
+                <div class="alert-sec alert-success">
+                    <span class="material-symbols-rounded">check_circle</span>
+                    <div>
+                        <strong>@seedArchivo</strong> fue cifrado y distribuido en AWS S3 + Azure Blob.
+                        ID del archivo: <strong>#@seedId</strong>
+                    </div>
+                </div>
+
+                <div class="alert-sec alert-error">
+                    <span class="material-symbols-rounded">warning</span>
+                    <strong>Esta semilla aparece UNA sola vez.</strong>
+                    El servidor la descarta ahora mismo. Sin ella, tu archivo es irrecuperable.
+                </div>
+
+                <div>
+                    <p class="label-caps" style="margin-bottom:10px;">Tu semilla de recuperación</p>
+                    <div style="
+                        background: var(--bg-input);
+                        border: 2px solid var(--accent);
+                        border-radius: var(--radius-md);
+                        padding: 16px 20px;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    ">
+                        <code id="seedValue" style="
+                            flex: 1;
+                            font-family: 'Courier New', monospace;
+                            font-size: 15px;
+                            font-weight: 700;
+                            color: var(--accent);
+                            word-break: break-all;
+                            letter-spacing: 1px;
+                        ">@seed</code>
+                        <button type="button" id="copySeedBtn" title="Copiar semilla"
+                                onclick="copySeed()"
+                                style="
+                                    background: var(--accent-dim);
+                                    border: 1px solid var(--accent);
+                                    border-radius: 8px;
+                                    padding: 8px;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    color: var(--accent);
+                                    flex-shrink: 0;
+                                    transition: background 0.15s;
+                                ">
+                            <span class="material-symbols-rounded" id="copyIcon">content_copy</span>
+                        </button>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+                        Guárdala en un gestor de contraseñas, en papel, o en un lugar seguro offline.
+                    </p>
+                </div>
+
+            </div>
+            <div class="modal-footer-sec" style="justify-content:center;">
+                <button type="button" class="btn-sec btn-primary-sec"
+                        onclick="document.getElementById('seedModal').classList.remove('open')">
+                    <span class="material-symbols-rounded">check</span>
+                    Ya guardé mi semilla, cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="flex-col gap-24" style="display:flex; flex-direction:column; gap:24px;">
+
+    @* Encabezado *@
+    <div class="section-header">
+        <h1 class="page-title">Procesamiento de Archivos</h1>
+        <p class="page-subtitle">Arrastra un archivo o selecciónalo desde tu sistema para encriptarlo o distribuirlo en multi-cloud.</p>
+    </div>
+
+    @* Formulario principal — ya no pide Master Key, el servidor genera la semilla *@
+    <form id="encryptForm" asp-controller="Dashboard" asp-action="Encrypt"
+          method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        @* Dropzone *@
+        <div class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" name="archivo"
+                   style="display:none" accept="*/*" />
+
+            <div class="dropzone-icon">
+                <span class="material-symbols-rounded" id="dropIcon">cloud_upload</span>
+            </div>
+            <p class="dropzone-title" id="dropTitle">Arrastra tu archivo hasta aquí</p>
+            <p class="dropzone-subtitle" id="dropSubtitle">
+                Solo archivos locales.
+            </p>
+
+            @* Info del archivo (se muestra cuando hay uno seleccionado) *@
+            <div class="file-info" id="fileInfo" style="display:none">
+                <div class="file-info-icon">
+                    <span class="material-symbols-rounded">task</span>
+                </div>
+                <div style="flex:1; min-width:0">
+                    <div class="file-info-name" id="fileName">—</div>
+                    <div class="file-info-size" id="fileSize">—</div>
+                </div>
+                <button type="button" class="file-info-remove" id="removeFile" title="Quitar archivo">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <button type="button" class="btn-sec btn-ghost-sec btn-sm-sec" id="browseBtn">
+                <span class="material-symbols-rounded">folder_open</span>
+                Explorar Sistema
+            </button>
+        </div>
+
+        @* Info — el servidor genera la semilla automáticamente *@
+        <div class="alert-sec alert-info" style="margin-top:20px;">
+            <span class="material-symbols-rounded">info</span>
+            El sistema generará una semilla criptográfica segura al cifrar.
+            Deberás guardarla — sin ella el archivo es irrecuperable.
+        </div>
+
+        @* Botón de acción *@
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn-sec btn-primary-sec btn-lg-sec btn-full" id="encryptBtn">
+                <span class="material-symbols-rounded">lock</span>
+                ENCRIPTAR ARCHIVO
+            </button>
+        </div>
+    </form>
+
+    @* Separador *@
+    <div class="flex items-center gap-16" style="display:flex;align-items:center;gap:16px;">
+        <div class="divider-sec" style="flex:1;"></div>
+        <span style="color:var(--text-muted);font-size:12px;font-weight:600;letter-spacing:1px;">O</span>
+        <div class="divider-sec" style="flex:1;"></div>
+    </div>
+
+    @* Descifrar por ID *@
+    <div class="card-sec">
+        <div class="card-header-sec">
+            <span class="material-symbols-rounded">lock_open</span>
+            Descifrar Archivo Existente
+        </div>
+        <div class="card-body-sec">
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">
+                Ingresa el ID del archivo y la <strong style="color:var(--accent);">semilla</strong>
+                que recibiste al cifrarlo. Sin ella, el descifrado es imposible.
+            </p>
+            <form asp-controller="Dashboard" asp-action="Decrypt" method="post">
+                @Html.AntiForgeryToken()
+                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                    <div class="form-group-sec" style="width:140px;">
+                        <label class="label-caps" for="archivoId">ID del Archivo</label>
+                        <input class="input-sec" type="number" id="archivoId" name="archivoId"
+                               placeholder="Ej: 3" min="1" required />
+                    </div>
+                    <div class="form-group-sec" style="flex:1;min-width:220px;">
+                        <label class="label-caps" for="seedInput">Semilla de Recuperación</label>
+                        <div class="input-group-sec">
+                            <input class="input-sec" type="password" id="seedInput" name="seed"
+                                   placeholder="Pega aquí tu semilla…"
+                                   autocomplete="off" required
+                                   style="font-family:monospace;letter-spacing:1px;" />
+                            <button type="button" class="input-icon-end"
+                                    data-toggle-password="#seedInput">
+                                <span class="material-symbols-rounded">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn-sec btn-outline-sec btn-lg-sec">
+                            <span class="material-symbols-rounded">lock_open</span>
+                            DESCIFRAR
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <p style="color:var(--text-muted);font-size:12px;margin-top:10px;">
+                Puedes ver los IDs disponibles en el
+                <a asp-controller="Log" asp-action="Index">Historial de Auditoría</a>.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+@* Modal confirmación encriptar *@
+<div class="modal-backdrop-sec" id="confirmModal">
+    <div class="modal-sec">
+        <div class="modal-header-sec">
+            <div class="modal-icon-wrap accent">
+                <span class="material-symbols-rounded">lock</span>
+            </div>
+            <span class="modal-title-sec">Confirmar Encriptación</span>
+            <button class="modal-close" id="confirmClose">
+                <span class="material-symbols-rounded">close</span>
+            </button>
+        </div>
+        <div class="modal-body-sec">
+            <p style="color:var(--text-primary);font-size:14px;line-height:1.6;">
+                ¿Estás seguro de que deseas encriptar este archivo?
+            </p>
+            <div class="card-sec" style="background:var(--bg-card);">
+                <div class="card-body-sec" style="padding:16px;">
+                    <div class="info-row">
+                        <span class="key">Archivo:</span>
+                        <span class="spacer"></span>
+                        <span class="val accent" id="confirmFileName">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="key">Tamaño:</span>
+                        <span class="spacer"></span>
+                        <span class="val" id="confirmFileSize">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="key">Algoritmo:</span>
+                        <span class="spacer"></span>
+                        <span class="val">AES-256-CBC</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="key">Destino:</span>
+                        <span class="spacer"></span>
+                        <span class="val">AWS S3 + Azure Blob (multi-cloud)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="alert-sec alert-warning">
+                <span class="material-symbols-rounded">warning</span>
+                Esta operación es irreversible sin la Master Key. Asegúrate de haberla guardado.
+            </div>
+        </div>
+        <div class="modal-footer-sec">
+            <button class="btn-sec btn-ghost-sec" id="confirmCancel">Cancelar</button>
+            <button class="btn-sec btn-primary-sec" id="confirmProceed">
+                <span class="material-symbols-rounded">lock</span>
+                Sí, Encriptar
+            </button>
+        </div>
+    </div>
+</div>
+
+@* Modal progreso *@
+<div class="modal-backdrop-sec" id="progressModal">
+    <div class="modal-sec" style="max-width:440px; text-align:center;">
+        <div class="modal-body-sec" style="align-items:center; padding:40px 32px;">
+            <div class="spinner" style="margin:0 auto 24px;"></div>
+            <p style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">
+                Encriptando Archivo…
+            </p>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;">
+                Procesando con AES-256-CBC y distribuyendo en multi-cloud
+            </p>
+            <div class="progress-bar-wrap" style="margin-bottom:12px;">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);" id="progressLabel">Iniciando…</p>
+            <div class="progress-steps" style="margin-top:20px;text-align:left;width:100%;">
+                <div class="progress-step" id="step1">
+                    <div class="step-icon"><div class="step-dot"></div></div>
+                    Lectura y hash SHA-256 del archivo
+                </div>
+                <div class="progress-step" id="step2">
+                    <div class="step-icon"><div class="step-dot"></div></div>
+                    Cifrado AES-256-CBC
+                </div>
+                <div class="progress-step" id="step3">
+                    <div class="step-icon"><div class="step-dot"></div></div>
+                    Subiendo fragmento A a AWS S3…
+                </div>
+                <div class="progress-step" id="step4">
+                    <div class="step-icon"><div class="step-dot"></div></div>
+                    Subiendo fragmento B a Azure Blob
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    const dropzone    = document.getElementById('dropzone');
+    const fileInput   = document.getElementById('fileInput');
+    const browseBtn   = document.getElementById('browseBtn');
+    const fileInfo    = document.getElementById('fileInfo');
+    const fileName    = document.getElementById('fileName');
+    const fileSize    = document.getElementById('fileSize');
+    const removeFile  = document.getElementById('removeFile');
+    const dropIcon    = document.getElementById('dropIcon');
+    const dropTitle   = document.getElementById('dropTitle');
+    const dropSubtitle = document.getElementById('dropSubtitle');
+    const encryptBtn  = document.getElementById('encryptBtn');
+    const encryptForm = document.getElementById('encryptForm');
+
+    // Confirm modal
+    const confirmModal   = document.getElementById('confirmModal');
+    const confirmClose   = document.getElementById('confirmClose');
+    const confirmCancel  = document.getElementById('confirmCancel');
+    const confirmProceed = document.getElementById('confirmProceed');
+    const confirmFileName = document.getElementById('confirmFileName');
+    const confirmFileSize = document.getElementById('confirmFileSize');
+
+    // Progress modal
+    const progressModal = document.getElementById('progressModal');
+    const progressFill  = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+
+    let selectedFile = null;
+
+    function formatSize(bytes) {
+        if (bytes < 1024)       return bytes + ' B';
+        if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+        return (bytes/1024/1024).toFixed(2) + ' MB';
+    }
+
+    function setFile(file) {
+        // Sin límite de tamaño en el frontend — el backend no tiene límite configurado
+        selectedFile = file;
+        fileName.textContent  = file.name;
+        fileSize.textContent  = formatSize(file.size);
+        fileInfo.style.display = 'flex';
+        dropIcon.textContent  = 'task';
+        dropTitle.textContent = 'Archivo listo para procesar';
+        dropSubtitle.textContent = '';
+        dropzone.classList.add('has-file');
+        browseBtn.style.display = 'none';
+    }
+
+    function clearFile() {
+        selectedFile = null;
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+        dropIcon.textContent  = 'cloud_upload';
+        dropTitle.textContent = 'Arrastra tu archivo hasta aquí';
+        dropSubtitle.textContent = 'Solo archivos locales. Tamaño máximo: 50 MB.';
+        dropzone.classList.remove('has-file');
+        browseBtn.style.display = '';
+    }
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+    removeFile.addEventListener('click', clearFile);
+
+    // Drag & drop
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) { setFile(file); fileInput.files = e.dataTransfer.files; }
+    });
+
+    // Abrir confirm modal al pulsar Encriptar
+    encryptBtn.addEventListener('click', e => {
+        e.preventDefault();
+        if (!selectedFile) {
+            alert('Selecciona un archivo primero.');
+            return;
+        }
+        confirmFileName.textContent = selectedFile.name;
+        confirmFileSize.textContent = formatSize(selectedFile.size);
+        confirmModal.classList.add('open');
+    });
+
+    confirmClose.addEventListener('click',  () => confirmModal.classList.remove('open'));
+    confirmCancel.addEventListener('click', () => confirmModal.classList.remove('open'));
+    confirmModal.addEventListener('click',  e => { if (e.target === confirmModal) confirmModal.classList.remove('open'); });
+
+    // Al confirmar: animar progreso y hacer submit
+    confirmProceed.addEventListener('click', () => {
+        confirmModal.classList.remove('open');
+        progressModal.classList.add('open');
+
+        // Animación de pasos (simulada, el servidor hace el trabajo real)
+        const steps = [
+            { id:'step1', pct: 25,  label: 'Calculando SHA-256…' },
+            { id:'step2', pct: 50,  label: 'Cifrando con AES-256-CBC…' },
+            { id:'step3', pct: 75,  label: 'Subiendo fragmento A a AWS S3…' },
+            { id:'step4', pct: 95,  label: 'Subiendo fragmento B a Azure Blob…' },
+        ];
+
+        let i = 0;
+        const tick = setInterval(() => {
+            if (i > 0) {
+                const prev = document.getElementById(steps[i-1].id);
+                prev.classList.remove('active');
+                prev.classList.add('done');
+                prev.querySelector('.step-icon').innerHTML =
+                    '<span class="material-symbols-rounded" style="color:var(--success);font-size:18px;">check_circle</span>';
+            }
+            if (i < steps.length) {
+                const s = steps[i];
+                const el = document.getElementById(s.id);
+                el.classList.add('active');
+                progressFill.style.width = s.pct + '%';
+                progressLabel.textContent = s.label;
+                i++;
+            } else {
+                clearInterval(tick);
+                progressFill.style.width = '100%';
+                progressLabel.textContent = 'Guardando en base de datos…';
+                encryptForm.submit();
+            }
+        }, 600);
+    });
+})();
+
+// Copiar semilla al portapapeles
+function copySeed() {
+    const seed = document.getElementById('seedValue')?.textContent?.trim();
+    if (!seed) return;
+    navigator.clipboard.writeText(seed).then(() => {
+        const icon = document.getElementById('copyIcon');
+        if (icon) { icon.textContent = 'check'; setTimeout(() => icon.textContent = 'content_copy', 2000); }
+    }).catch(() => {
+        // Fallback para navegadores sin clipboard API
+        const el = document.createElement('textarea');
+        el.value = seed;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        const icon = document.getElementById('copyIcon');
+        if (icon) { icon.textContent = 'check'; setTimeout(() => icon.textContent = 'content_copy', 2000); }
+    });
+}
+</script>
+}

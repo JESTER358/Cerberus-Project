@@ -25,80 +25,40 @@ namespace ProyectoInnovador.Security.Services
                 throw new InvalidOperationException("S3 credentials are missing. Configure S3:AccessKey and S3:SecretKey.");
             }
 
-            var config = new AmazonS3Config
+            // ServiceURL y RegionEndpoint son mutuamente excluyentes en el SDK de AWS.
+            // Para AWS real: usar RegionEndpoint y omitir ServiceURL.
+            // Para MinIO local: usar ServiceURL + ForcePathStyle = true y omitir RegionEndpoint.
+            AmazonS3Config config;
+            if (string.IsNullOrWhiteSpace(_options.ServiceUrl) ||
+                _options.ServiceUrl.Contains("amazonaws.com", StringComparison.OrdinalIgnoreCase))
             {
-                ServiceURL = _options.ServiceUrl,
-                ForcePathStyle = _options.ForcePathStyle
-            };
+                // Modo AWS real — región explícita, sin ServiceURL
+                config = new AmazonS3Config
+                {
+                    RegionEndpoint = Amazon.RegionEndpoint.USEast2
+                };
+            }
+            else
+            {
+                // Modo local (MinIO u otro emulador)
+                config = new AmazonS3Config
+                {
+                    ServiceURL = _options.ServiceUrl,
+                    ForcePathStyle = _options.ForcePathStyle
+                };
+            }
             _s3Client = new AmazonS3Client(_options.AccessKey, _options.SecretKey, config);
         }
 
-        //logica de Fragmentacion (Partir archivos)
-        public async Task<S3UploadBatchResult> SubirArchivoFragmentadoAsync(string nombreBase, byte[] datosCompletos, int tamanoFragmentoBytes)
-        {
-            if (tamanoFragmentoBytes <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(tamanoFragmentoBytes), "Fragment size must be > 0.");
-            }
-
-            int totalFragmentos = (int)Math.Ceiling((double)datosCompletos.Length / tamanoFragmentoBytes);
-            var resultados = new List<S3FragmentUploadResult>(capacity: totalFragmentos);
-
-            await EnsureBucketExistsAsync();
-            
-            for (int i = 0; i < totalFragmentos; i++)
-            {
-                int offset = i * tamanoFragmentoBytes;
-                int tamanoActual = Math.Min(tamanoFragmentoBytes, datosCompletos.Length - offset);
-                
-                byte[] fragmento = new byte[tamanoActual];
-                Buffer.BlockCopy(datosCompletos, offset, fragmento, 0, tamanoActual);
-
-                // formato: archivo.bin.part_001
-                string nombreFragmento = $"{nombreBase}.part_{i + 1:D3}";
-                
-                Console.WriteLine($"[CERBERUS] Subiendo fragmento {i + 1}/{totalFragmentos}: {nombreFragmento}");
-                await using var stream = new MemoryStream(fragmento, writable: false);
-                var etag = await SubirFragmentoAsync(nombreFragmento, stream);
-                resultados.Add(new S3FragmentUploadResult
-                {
-                    FragmentKey = nombreFragmento,
-                    ETag = etag,
-                    FragmentIndex = i + 1,
-                    TotalFragments = totalFragmentos,
-                    SizeBytes = tamanoActual
-                });
-            }
-
-            return new S3UploadBatchResult
-            {
-                BucketName = _options.BucketName,
-                BaseFileName = nombreBase,
-                Fragments = resultados
-            };
-        }
-
-        private async Task EnsureBucketExistsAsync()
-        {
-            var exists = await AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, _options.BucketName);
-            if (exists)
-            {
-                return;
-            }
-
-            await _s3Client.PutBucketAsync(new PutBucketRequest
-            {
-                BucketName = _options.BucketName
-            });
-        }
-
+        /// <summary>
+        /// Sube un fragmento a AWS S3 de forma asíncrona.
+        /// </summary>
+        /// <param name="nombreKey">Nombre con el que se guardará el fragmento.</param>
+        /// <param name="datos">Stream con los bytes del fragmento.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
+        /// <returns>El ETag asignado por S3 al objeto.</returns>
         public async Task<string> SubirFragmentoAsync(string nombreKey, Stream datos, CancellationToken cancellationToken = default)
         {
-            if (datos is null)
-            {
-                throw new ArgumentNullException(nameof(datos));
-            }
-
             var request = new PutObjectRequest
             {
                 BucketName = _options.BucketName,

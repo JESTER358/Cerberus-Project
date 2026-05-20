@@ -14,5 +14,8 @@ public interface IFileOrchestrator
     /// <param name="archivoId">Id del archivo original.</param>
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Bytes del archivo recuperado y desencriptado.</returns>
-    Task<byte[]> DownloadAndReassembleAsync(int archivoId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Descifra y reensambla un archivo usando la semilla que el usuario guardó.
+    /// </summary>
+    Task<byte[]> DownloadAndReassembleAsync(int archivoId, string seed, CancellationToken cancellationToken = default);
 }

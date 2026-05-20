@@ -30,6 +30,7 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(a => a.Id);
             entity.Property(a => a.Nombre).IsRequired().HasMaxLength(255);
             entity.Property(a => a.HashSha256).IsRequired().HasMaxLength(64);
+            entity.Property(a => a.SeedHash).IsRequired().HasMaxLength(64);
             entity.Property(a => a.Tamano).IsRequired();
         });
 

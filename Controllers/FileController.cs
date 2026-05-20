@@ -19,7 +19,11 @@ public sealed class FileController : ControllerBase
     {
         try
         {
-            var fileBytes = await _fileOrchestrator.DownloadAndReassembleAsync(id, HttpContext.RequestAborted);
+            // Endpoint API heredado — requiere la semilla vía header X-Seed
+            var seed = Request.Headers["X-Seed"].FirstOrDefault() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(seed))
+                return BadRequest("Header X-Seed requerido. Usa la semilla recibida al cifrar.");
+            var fileBytes = await _fileOrchestrator.DownloadAndReassembleAsync(id, seed, HttpContext.RequestAborted);
             return File(fileBytes, "application/octet-stream", $"archivo_recuperado_{id}.bin");
         }
         catch (ArgumentException ex)

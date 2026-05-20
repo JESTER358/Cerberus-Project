@@ -1,62 +1,99 @@
 namespace ProyectoInnovador.Security.Services;
-using Azure.Storage.Blobs;
-using Azure;
-using System;
-using System.IO;
-using System.Threading.Tasks;
-public class AzureService
-{
-    //llave maestra para servidor local
-    private readonly string connectionString = "UseDevelopmentStorage=true;";
-    private readonly string containerName = "cerberus-azure-fragments";
 
-    public async Task SubirFragmentoAzureAsync(string nombreArchivo, Stream fragmentoStream, CancellationToken cancellationToken = default)
+using Azure;
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Configuration;
+using ProyectoInnovador.Security.Contracts;
+
+/// <summary>
+/// Implementación nativa de <see cref="IAzureService"/> sobre Azure Blob Storage.
+/// Utiliza exclusivamente <see cref="Stream"/> para proteger la memoria RAM del servidor
+/// ante archivos industriales de gran tamaño (+750 MB). Queda estrictamente prohibido
+/// el uso de <c>byte[]</c> en cualquier operación de este servicio.
+/// </summary>
+public class AzureService : IAzureService
+{
+    private readonly BlobContainerClient _containerClient;
+
+    /// <summary>
+    /// Inicializa el cliente de Azure Blob Storage leyendo la configuración
+    /// desde la sección <c>CloudProviderSettings:AzureBlobStorage</c>.
+    /// </summary>
+    /// <param name="configuration">Instancia de <see cref="IConfiguration"/> inyectada por el DI container.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Se lanza si la cadena de conexión o el nombre del contenedor no están definidos en la configuración.
+    /// </exception>
+    public AzureService(IConfiguration configuration)
     {
+        var section = configuration.GetSection("CloudProviderSettings:AzureBlobStorage");
+
+        var connectionString = section["ConnectionString"]
+            ?? throw new InvalidOperationException(
+                "La clave 'CloudProviderSettings:AzureBlobStorage:ConnectionString' no está definida en appsettings.json.");
+
+        var containerName = section["ContainerName"]
+            ?? throw new InvalidOperationException(
+                "La clave 'CloudProviderSettings:AzureBlobStorage:ContainerName' no está definida en appsettings.json.");
+
+        // BlobServiceClient se inicializa una sola vez (Singleton) y es thread-safe.
+        var blobServiceClient = new BlobServiceClient(connectionString);
+        _containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// El Stream se transmite directamente a Azure sin intermediarios en memoria.
+    /// El blob se sobreescribe si ya existe (<c>overwrite: true</c>).
+    /// </remarks>
+    public async Task UploadFragmentAsync(
+        string fragmentName,
+        Stream stream,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fragmentName);
+        ArgumentNullException.ThrowIfNull(stream);
+
         try
         {
-            Console.WriteLine($"[INFO] Conectando con Azurite para enviar: {nombreArchivo}...");
+            // Garantiza que el contenedor existe sin fallar si ya fue creado.
+            await _containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
 
-            //instanciar el cliente forzando una version de API compatible con Azurite
-            var options = new BlobClientOptions(BlobClientOptions.ServiceVersion.V2021_12_02);
-            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString, options);
+            BlobClient blobClient = _containerClient.GetBlobClient(fragmentName);
 
-            //conectar al contenedor (y crearlo si no existe)
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-            await containerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
-
-            //preparar el archivo
-            BlobClient blobClient = containerClient.GetBlobClient(nombreArchivo);
-
-            await blobClient.UploadAsync(fragmentoStream, overwrite: true, cancellationToken: cancellationToken);
-
-            Console.WriteLine($"[EXITO] fragmento {nombreArchivo} asegurado en la vault de Azure");
+            // UploadAsync transmite el stream directamente; nunca materializa byte[].
+            await blobClient.UploadAsync(stream, overwrite: true, cancellationToken: cancellationToken);
         }
         catch (RequestFailedException ex)
         {
-            Console.WriteLine($"[ERROR AZURITE] fallo la subida (Status={ex.Status}, Code={ex.ErrorCode}): {ex.Message}");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR AZURITE] fallo la subida: {ex.Message}");
-            throw;
+            // Error estructurado de Azure: código HTTP + código de error del servicio.
+            throw new InvalidOperationException(
+                $"[AzureService] Upload falló para '{fragmentName}'. Status={ex.Status}, Code={ex.ErrorCode}: {ex.Message}", ex);
         }
     }
 
-    /// <summary>
-    /// Descarga un fragmento desde Azure Blob Storage de forma asíncrona.
-    /// </summary>
-    /// <param name="nombreArchivo">Nombre del blob a descargar.</param>
-    /// <param name="cancellationToken">Token de cancelación.</param>
-    /// <returns>Stream con el contenido del fragmento.</returns>
-    public async Task<Stream> DescargarFragmentoAzureAsync(string nombreArchivo, CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    /// <remarks>
+    /// El <see cref="Stream"/> retornado proviene directamente de la respuesta HTTP de Azure.
+    /// El llamador DEBE disponer el stream en un bloque <c>using</c> para liberar la conexión.
+    /// </remarks>
+    public async Task<Stream> DownloadFragmentAsync(
+        string fragmentName,
+        CancellationToken cancellationToken = default)
     {
-        var options = new BlobClientOptions(BlobClientOptions.ServiceVersion.V2021_12_02);
-        BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString, options);
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
-        BlobClient blobClient = containerClient.GetBlobClient(nombreArchivo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fragmentName);
 
-        var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
-        return response.Value.Content;
+        try
+        {
+            BlobClient blobClient = _containerClient.GetBlobClient(fragmentName);
+
+            // DownloadStreamingAsync retorna el stream de la respuesta HTTP sin buffering.
+            var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
+            return response.Value.Content;
+        }
+        catch (RequestFailedException ex)
+        {
+            throw new InvalidOperationException(
+                $"[AzureService] Download falló para '{fragmentName}'. Status={ex.Status}, Code={ex.ErrorCode}: {ex.Message}", ex);
+        }
     }
 }

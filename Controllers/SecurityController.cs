@@ -55,20 +55,21 @@ public sealed class SecurityController : ControllerBase
                 return BadRequest("archivo es requerido");
             }
 
-            var result = await _orchestrator.UploadMultiCloudAsync(archivo, HttpContext.RequestAborted);
+            var (result, seed) = await _orchestrator.UploadMultiCloudAsync(archivo, HttpContext.RequestAborted);
 
             return Ok(new
             {
-                archivoId = result.ArchivoOriginal.Id,
-                nombre = result.ArchivoOriginal.Nombre,
-                tamano = result.ArchivoOriginal.Tamano,
+                archivoId  = result.ArchivoOriginal.Id,
+                nombre     = result.ArchivoOriginal.Nombre,
+                tamano     = result.ArchivoOriginal.Tamano,
                 hashSha256 = result.ArchivoOriginal.HashSha256,
-                s3ETag = result.S3ETag,
+                s3ETag     = result.S3ETag,
+                seed,   // semilla — guardarla de forma segura, no se repite
                 fragmentos = result.ArchivoOriginal.Fragmentos.Select(fragmento => new
                 {
                     proveedor = fragmento.CloudProvider,
-                    url = fragmento.UrlRemota,
-                    hash = fragmento.HashFragmento
+                    url       = fragmento.UrlRemota,
+                    hash      = fragmento.HashFragmento
                 })
             });
         }

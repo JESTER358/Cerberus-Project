@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +19,8 @@ public sealed class FileOrchestrator : IFileOrchestrator
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly S3Service _s3Service;
-    private readonly AzureService _azureService;
-    private readonly IFileCryptoService _fileCryptoService;
+    private readonly IAzureService _azureService;
+    private readonly IAesRoundtripService _aesRoundtripService;
 
     /// <summary>
     /// Constructor de FileOrchestrator.
@@ -27,31 +28,43 @@ public sealed class FileOrchestrator : IFileOrchestrator
     public FileOrchestrator(
         ApplicationDbContext dbContext,
         S3Service s3Service,
-        AzureService azureService,
-        IFileCryptoService fileCryptoService)
+        IAzureService azureService,
+        IAesRoundtripService aesRoundtripService)
     {
         _dbContext = dbContext;
         _s3Service = s3Service;
         _azureService = azureService;
-        _fileCryptoService = fileCryptoService;
+        _aesRoundtripService = aesRoundtripService;
     }
 
     /// <summary>
     /// Recupera un archivo desde las nubes, lo reensambla, lo desencripta y verifica su integridad.
     /// </summary>
     /// <param name="archivoId">El identificador del archivo original en la base de datos.</param>
+    /// <param name="userKey">Clave AES-256 del usuario (32 bytes). El servidor nunca la persiste.</param>
     /// <param name="cancellationToken">Token para cancelar la operación asíncrona.</param>
     /// <returns>Arreglo de bytes con el contenido original desencriptado.</returns>
     /// <exception cref="ArgumentException">Se lanza si el archivo no existe o no tiene los fragmentos requeridos.</exception>
     /// <exception cref="CryptographicException">Se lanza si la verificación de integridad SHA-256 falla.</exception>
-    public async Task<byte[]> DownloadAndReassembleAsync(int archivoId, CancellationToken cancellationToken = default)
+    public async Task<byte[]> DownloadAndReassembleAsync(int archivoId, string seed, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(seed))
+            throw new ArgumentException("La semilla es requerida.", nameof(seed));
+
         var archivo = await _dbContext.ArchivosOriginales
             .Include(a => a.Fragmentos)
             .FirstOrDefaultAsync(a => a.Id == archivoId, cancellationToken);
 
         if (archivo == null)
             throw new ArgumentException("Archivo no encontrado", nameof(archivoId));
+
+        // Validar semilla ANTES de descargar nada de las nubes
+        var seedHashIngresado = Convert.ToHexString(
+            SHA256.HashData(Encoding.UTF8.GetBytes(seed))).ToLowerInvariant();
+
+        if (!string.Equals(seedHashIngresado, archivo.SeedHash, StringComparison.OrdinalIgnoreCase))
+            throw new CryptographicException(
+                "Semilla incorrecta. Verifica que copiaste exactamente la semilla que recibiste al cifrar.");
 
         var fragmentoS3 = archivo.Fragmentos.FirstOrDefault(f => f.CloudProvider == "AWS");
         var fragmentoAzure = archivo.Fragmentos.FirstOrDefault(f => f.CloudProvider == "Azure");
@@ -61,7 +74,7 @@ public sealed class FileOrchestrator : IFileOrchestrator
 
         // 1. Descarga Asíncrona en Paralelo usando Task.WhenAll
         var s3Task = _s3Service.DescargarFragmentoAsync(fragmentoS3.UrlRemota, cancellationToken);
-        var azureTask = _azureService.DescargarFragmentoAzureAsync(fragmentoAzure.UrlRemota, cancellationToken);
+        var azureTask = _azureService.DownloadFragmentAsync(fragmentoAzure.UrlRemota, cancellationToken);
 
         await Task.WhenAll(s3Task, azureTask);
 
@@ -77,9 +90,11 @@ public sealed class FileOrchestrator : IFileOrchestrator
 
         var reensambladoBytes = memoryStream.ToArray();
 
-        // 3. Desencriptación AES-256
-        // Se asume que el arreglo reensamblado contiene el IV en los primeros 16 bytes y luego el Ciphertext
-        // Si la encriptación se manejó diferente, se debe ajustar la creación de AesPayload.
+        // 3. Desencriptación AES-256 con la clave del usuario
+        // El IV ocupa los primeros 16 bytes; el resto es el ciphertext.
+        if (reensambladoBytes.Length <= 16)
+            throw new CryptographicException("El criptograma reensamblado es inválido (demasiado corto).");
+
         var iv = reensambladoBytes.Take(16).ToArray();
         var ciphertext = reensambladoBytes.Skip(16).ToArray();
 
@@ -87,17 +102,21 @@ public sealed class FileOrchestrator : IFileOrchestrator
         {
             Iv = iv,
             Ciphertext = ciphertext,
-            KeyVersion = "1" // Se asume versión activa, se puede extender si se guarda en DB
+            KeyVersion = "user-key"
         };
+
+        // Derivar la clave AES desde la semilla (mismo algoritmo que al cifrar)
+        var aesKey = SecurityCheckOrchestrator.DeriveKeyFromSeed(seed);
 
         byte[] decryptedBytes;
         try
         {
-            decryptedBytes = _fileCryptoService.DecryptFile(payload);
+            decryptedBytes = _aesRoundtripService.Decrypt(payload, aesKey);
         }
         catch (Exception ex)
         {
-            throw new CryptographicException("Fallo en la desencriptación AES-256. Verifique las llaves o la integridad del criptograma.", ex);
+            throw new CryptographicException(
+                "Fallo al descifrar. El archivo puede estar corrompido.", ex);
         }
 
         // 4. Verificación SHA-256 post-reensamblaje comparando contra el valor en la base de datos

@@ -18,8 +18,15 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(optio
 
 //configuracion de Servicios
 builder.Services.AddControllersWithViews();
+
+// SQLite con path persistente en Azure App Service.
+// En Azure, D:\home\data sobrevive restarts y deploys (almacenamiento persistente montado).
+// En local, usa el directorio de la app normalmente.
+var dbFolder = Environment.GetEnvironmentVariable("CERBERUS_DB_PATH")
+    ?? AppContext.BaseDirectory;
+var dbPath = Path.Combine(dbFolder, "cerberus.db");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite("Data Source=cerberus.db"));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.Configure<S3StorageOptions>(builder.Configuration.GetSection("S3"));
 
@@ -32,9 +39,20 @@ builder.Services.AddScoped<IFileOrchestrator, FileOrchestrator>();
 
 //registro de S3 para MinIO (Tarea 1)
 builder.Services.AddSingleton<S3Service>();
-builder.Services.AddSingleton<AzureService>();
+
+// Azure Blob Storage — inyección limpia vía interfaz (IAzureService → AzureService)
+builder.Services.AddSingleton<IAzureService, AzureService>();
 
 var app = builder.Build();
+
+// Auto-migrate: aplica todas las migraciones pendientes al arrancar.
+// Si cerberus.db no existe, lo crea. Si ya existe, solo aplica lo que falta.
+// Crítico para Azure App Service donde el archivo empieza desde cero en cada deploy.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 if (!app.Environment.IsDevelopment())
 {

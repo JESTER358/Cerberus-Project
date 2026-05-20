@@ -1,0 +1,157 @@
+@model ProyectoInnovador.Controllers.SettingsViewModel
+@{
+    ViewData["Title"]      = "Configuración del Sistema";
+    ViewData["ActivePage"] = "Settings";
+}
+
+<div style="display:flex; flex-direction:column; gap:24px;">
+
+    <div class="section-header">
+        <h1 class="page-title">
+            <span style="color:var(--text-primary);">SYSTEM</span>
+            <span style="color:var(--accent);"> SETTINGS</span>
+        </h1>
+        <p class="page-subtitle">Configuración activa del sistema de encriptación.</p>
+    </div>
+
+    <div class="settings-layout">
+
+        @* Menú lateral *@
+        <div class="settings-menu">
+            <div class="settings-menu-title">Configuración</div>
+            <div class="settings-menu-divider"></div>
+            <a href="#almacenamiento" class="settings-menu-item active">
+                <span class="material-symbols-rounded">folder</span>
+                Almacenamiento
+            </a>
+            <a href="#seguridad" class="settings-menu-item">
+                <span class="material-symbols-rounded">shield</span>
+                Seguridad
+            </a>
+            <a href="#sesion" class="settings-menu-item">
+                <span class="material-symbols-rounded">timer</span>
+                Sesión
+            </a>
+        </div>
+
+        @* Panel de configuración *@
+        <form asp-controller="Settings" asp-action="Save" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="settings-panel">
+
+                @* Almacenamiento *@
+                <div class="card-sec" id="almacenamiento">
+                    <div class="card-header-sec">
+                        <span class="material-symbols-rounded">folder</span>
+                        Almacenamiento
+                    </div>
+                    <div class="card-body-sec" style="display:flex;flex-direction:column;gap:20px;">
+
+                        <div class="form-group-sec">
+                            <label class="label-caps">Endpoint S3 / MinIO</label>
+                            <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
+                                Actualmente apuntando al simulador local MinIO.
+                                Cuando migres a AWS real, cambia este valor.
+                            </p>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input class="input-sec" type="text" value="@Model.S3Endpoint" readonly
+                                       style="color:var(--text-secondary);cursor:default;" />
+                                <span class="badge-sec badge-accent">LOCAL</span>
+                            </div>
+                        </div>
+
+                        <div class="divider-sec"></div>
+
+                        <div class="form-group-sec">
+                            <label class="label-caps">Bucket S3</label>
+                            <input class="input-sec" type="text" value="@Model.S3BucketName" readonly
+                                   style="color:var(--text-secondary);cursor:default;" />
+                        </div>
+
+                        <div class="divider-sec"></div>
+
+                        <div class="form-group-sec">
+                            <label class="label-caps">Azure Blob Storage</label>
+                            <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
+                                Actualmente usando Azurite (simulador local).
+                            </p>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input class="input-sec" type="text" value="@Model.AzureMode" readonly
+                                       style="color:var(--text-secondary);cursor:default;font-size:12px;" />
+                                <span class="badge-sec badge-accent">LOCAL</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* Seguridad *@
+                <div class="card-sec" id="seguridad">
+                    <div class="card-header-sec">
+                        <span class="material-symbols-rounded">shield</span>
+                        Seguridad
+                    </div>
+                    <div class="card-body-sec" style="display:flex;flex-direction:column;gap:20px;">
+
+                        <div class="form-group-sec">
+                            <label class="label-caps">Algoritmo de Cifrado</label>
+                            <p style="color:var(--text-muted);font-size:12px;margin-bottom:6px;">
+                                AES-256-CBC con verificación de integridad SHA-256.
+                            </p>
+                            <select class="select-sec" name="Algorithm">
+                                <option value="AES-256-CBC" selected>AES-256-CBC (Recomendado)</option>
+                            </select>
+                        </div>
+
+                        <div class="divider-sec"></div>
+
+                        <div class="form-group-sec">
+                            <label class="label-caps">Versión de Clave Activa</label>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <input class="input-sec" type="text" value="@Model.KeyVersion" readonly
+                                       style="color:var(--text-secondary);cursor:default;" />
+                                <span class="badge-sec badge-success">ACTIVA</span>
+                            </div>
+                            <p class="field-warning" style="margin-top:4px;">
+                                <span class="material-symbols-rounded">warning</span>
+                                Cambiar la clave invalida todos los archivos cifrados anteriormente.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* Sesión *@
+                <div class="card-sec" id="sesion">
+                    <div class="card-header-sec">
+                        <span class="material-symbols-rounded">timer</span>
+                        Sesión
+                    </div>
+                    <div class="card-body-sec">
+                        <div class="toggle-wrap">
+                            <div class="toggle-info">
+                                <span class="toggle-label">Auto-cierre de sesión</span>
+                                <span class="toggle-sub">Bloquear tras 5 minutos de inactividad</span>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" name="AutoLogout" value="true"
+                                       @(Model.AutoLogout ? "checked" : "") />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                @* Guardar *@
+                <div>
+                    <button type="submit" class="btn-sec btn-primary-sec btn-lg-sec btn-full">
+                        <span class="material-symbols-rounded">save</span>
+                        GUARDAR PREFERENCIAS
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
